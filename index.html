@@ -10,18 +10,18 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="現場記録">
     
-    <title>現場記録アプリ v1.0.0</title>
+    <title>現場記録アプリ v1.5.0</title>
     
-    <!-- PWA Manifest Placeholder -->
-    <link rel="manifest" id="dynamic-manifest">
-    <link rel="apple-touch-icon" id="dynamic-apple-icon">
+    <!-- PWA Settings (Static Link) -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
 
-    <!-- Anti-Flash Script (Prevents white flash on dark mode load) -->
+    <!-- Anti-Flash Script -->
     <script>
         (function() {
-            const savedTheme = localStorage.getItem('theme');
-            const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            if (savedTheme === 'dark' || (!savedTheme && systemDark)) {
+            const s = localStorage.getItem('theme');
+            const d = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (s === 'dark' || (!s && d)) {
                 document.documentElement.classList.add('dark');
                 document.querySelector('meta[name="theme-color"][media="(prefers-color-scheme: light)"]').setAttribute('content', '#0f172a');
             } else {
@@ -30,25 +30,15 @@
         })();
     </script>
     
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
             theme: {
                 extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'Noto Sans JP', 'sans-serif'],
-                        mono: ['Roboto Mono', 'monospace'],
-                    },
-                    colors: {
-                        slate: { 850: '#151e32' } // Deep dark blue-grey for dark mode
-                    },
-                    boxShadow: {
-                        'glow': '0 0 15px rgba(59, 130, 246, 0.5)',
-                        'card': '0 4px 6px -1px rgba(0,0,0,0.05)',
-                        'card-dark': '0 4px 6px -1px rgba(0,0,0,0.3)',
-                    },
+                    fontFamily: { sans: ['Inter', 'Noto Sans JP', 'sans-serif'], mono: ['Roboto Mono', 'monospace'] },
+                    colors: { slate: { 850: '#151e32' } },
+                    boxShadow: { 'glow': '0 0 15px rgba(59, 130, 246, 0.5)' },
                     animation: {
                         'slide-in-right': 'slideInRight 0.25s ease-out forwards',
                         'slide-in-left': 'slideInLeft 0.25s ease-out forwards',
@@ -68,102 +58,39 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
     
     <style>
-        /* --- Base & Reset --- */
         html, body { height: 100%; overflow: hidden; touch-action: pan-x pan-y; }
-        body { 
-            font-family: 'Inter', 'Noto Sans JP', sans-serif; 
-            -webkit-tap-highlight-color: transparent; 
-            display: flex; flex-direction: column;
-            background-color: #f8fafc; color: #334155;
-            transition: background-color 0.3s ease, color 0.3s ease;
-        }
+        body { font-family: 'Inter', 'Noto Sans JP', sans-serif; -webkit-tap-highlight-color: transparent; display: flex; flex-direction: column; background-color: #f8fafc; color: #334155; transition: background-color 0.3s, color 0.3s; }
         html.dark body { background-color: #0f172a; color: #f1f5f9; }
-
-        /* --- Layout --- */
         .main-content { flex-grow: 1; overflow-y: auto; padding-bottom: 120px; padding-top: 10px; overscroll-behavior-y: contain; }
         .safe-area-top { padding-top: env(safe-area-inset-top); }
         .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom); }
-
-        /* --- Components --- */
-        .header-glass {
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-            border-bottom: 1px solid rgba(0,0,0,0.05);
-        }
-        html.dark .header-glass {
-            background: rgba(15, 23, 42, 0.9);
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-        }
-
-        .modern-card {
-            background-color: white; border-radius: 1.25rem;
-            box-shadow: var(--theme-shadow-card, 0 4px 6px -1px rgba(0,0,0,0.05));
-            border: 1px solid rgba(241, 245, 249, 1);
-        }
-        html.dark .modern-card {
-            background-color: #1e293b; border-color: rgba(255,255,255,0.05);
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3);
-        }
-
-        .modern-input {
-            background-color: #f8fafc; border: 1px solid #e2e8f0;
-            color: #1e293b; border-radius: 0.75rem; appearance: none;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-        .modern-input:focus {
-            background-color: white; border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); outline: none;
-        }
-        html.dark .modern-input {
-            background-color: #334155; border-color: #475569; color: white;
-        }
+        .header-glass { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid rgba(0,0,0,0.05); }
+        html.dark .header-glass { background: rgba(15, 23, 42, 0.9); border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .modern-card { background-color: white; border-radius: 1.25rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid rgba(241, 245, 249, 1); }
+        html.dark .modern-card { background-color: #1e293b; border-color: rgba(255,255,255,0.05); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3); }
+        .modern-input { background-color: #f8fafc; border: 1px solid #e2e8f0; color: #1e293b; border-radius: 0.75rem; appearance: none; }
+        .modern-input:focus { background-color: white; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); outline: none; }
+        html.dark .modern-input { background-color: #334155; border-color: #475569; color: white; }
         html.dark .modern-input:focus { background-color: #1e293b; border-color: #60a5fa; }
-
-        /* --- Modal & Transitions --- */
-        .backdrop {
-            background-color: rgba(0,0,0,0.6); backdrop-filter: blur(2px);
-            transition: opacity 0.3s ease; opacity: 0; pointer-events: none;
-        }
+        .backdrop { background-color: rgba(0,0,0,0.6); backdrop-filter: blur(2px); transition: opacity 0.3s ease; opacity: 0; pointer-events: none; }
         .backdrop.active { opacity: 1; pointer-events: auto; }
-        
-        .modal-sheet {
-            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-            transform: translateY(100%);
-        }
+        .modal-sheet { transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); transform: translateY(100%); }
         .modal-sheet.active { transform: translateY(0); }
-        
-        .side-menu-panel {
-            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-            transform: translateX(-100%);
-        }
+        .side-menu-panel { transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); transform: translateX(-100%); }
         .side-menu-panel.active { transform: translateX(0); }
-
-        /* --- Calendar --- */
         .calendar-day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; position: relative; border-radius: 999px; font-weight: 500; }
         .calendar-day.has-record::after { content: ''; position: absolute; bottom: 4px; width: 4px; height: 4px; background-color: #3b82f6; border-radius: 50%; }
         .calendar-day.is-today { border: 2px solid #3b82f6; color: #3b82f6; font-weight: 700; }
         .calendar-day.is-selected { background-color: #3b82f6; color: white; border: none; }
-
-        /* --- Toast --- */
-        #toast { 
-            visibility: hidden; min-width: 90%; margin-left: -45%; 
-            background-color: #1e293b; color: #fff; text-align: center; 
-            border-radius: 99px; padding: 14px 20px; position: fixed; z-index: 100; 
-            left: 50%; bottom: 30px; opacity: 0; transform: translateY(20px); 
-            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); 
-            box-shadow: 0 10px 30px -5px rgba(0,0,0,0.4); font-weight: 600;
-        }
+        #toast { visibility: hidden; min-width: 90%; margin-left: -45%; background-color: #1e293b; color: #fff; text-align: center; border-radius: 99px; padding: 14px 20px; position: fixed; z-index: 100; left: 50%; bottom: 30px; opacity: 0; transform: translateY(20px); transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 10px 30px -5px rgba(0,0,0,0.4); font-weight: 600; }
         html.dark #toast { background-color: #f8fafc; color: #0f172a; }
         #toast.show { visibility: visible; opacity: 1; transform: translateY(0); }
-        
-        /* Mobile Touch Fixes */
         button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; outline: none; }
-        button:active { transform: scale(0.97); } /* Global micro-interaction */
+        button:active { transform: scale(0.97); }
     </style>
 </head>
 <body>
 
-    <!-- Overlays -->
     <div id="sidemenu-backdrop" class="backdrop fixed inset-0 z-40"></div>
     <div id="modal-backdrop" class="backdrop fixed inset-0 z-50"></div>
     <div id="dialog-modal-backdrop" class="backdrop fixed inset-0 z-[60] flex items-center justify-center p-4">
@@ -173,7 +100,7 @@
     <!-- Side Menu -->
     <div id="side-menu" class="side-menu-panel fixed top-0 left-0 h-full w-80 bg-white dark:bg-slate-900 shadow-2xl z-50 flex flex-col safe-area-top safe-area-bottom">
         <div class="p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gray-50/80 dark:bg-slate-800/80">
-            <div><h2 class="text-xl font-bold tracking-tight text-slate-800 dark:text-white">メニュー</h2><p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">現場記録アプリ v1.0.0</p></div>
+            <div><h2 class="text-xl font-bold tracking-tight text-slate-800 dark:text-white">メニュー</h2><p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">現場記録アプリ v1.5.0</p></div>
             <button data-action="close-menu" class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-300"><i class="fas fa-times"></i></button>
         </div>
         <div class="flex-grow overflow-y-auto p-4 space-y-2">
@@ -196,8 +123,9 @@
                     <button data-action="show-about" class="w-full flex items-center p-3 rounded-xl active:bg-slate-100 dark:active:bg-slate-800 transition-colors text-slate-700 dark:text-slate-200"><i class="fas fa-info-circle w-6 text-center text-sky-500 mr-2"></i><span class="font-medium text-sm">このアプリについて</span></button>
                 </div>
             </div>
+            <!-- Dev Menu: Crucial for PWA setup -->
             <div class="py-2 mt-2"><button data-action="toggle-accordion" data-target="dev-menu" class="w-full flex items-center justify-between px-3 py-2 text-xs text-slate-400 active:text-slate-600 dark:active:text-slate-300"><span><i class="fas fa-code mr-1"></i> 開発者メニュー (PWA)</span><i class="fas fa-chevron-down transform transition-transform duration-200"></i></button>
-                <div id="dev-menu" class="hidden pl-3 mt-1 space-y-1"><p class="text-[10px] text-slate-400 px-1 mb-1">※個別DL推奨</p>
+                <div id="dev-menu" class="hidden pl-3 mt-1 space-y-1"><p class="text-[10px] text-slate-400 px-1 mb-1">※アプリ化には以下をDLしてアップロードしてください</p>
                     <button data-action="dl-manifest" class="w-full text-left p-2 rounded text-xs font-mono text-slate-600 bg-slate-100 active:bg-slate-200 dark:text-slate-300 dark:bg-slate-800 dark:active:bg-slate-700 mb-1"><i class="fas fa-file-code mr-2 text-orange-500"></i>1. manifest.json</button>
                     <button data-action="dl-sw" class="w-full text-left p-2 rounded text-xs font-mono text-slate-600 bg-slate-100 active:bg-slate-200 dark:text-slate-300 dark:bg-slate-800 dark:active:bg-slate-700 mb-1"><i class="fas fa-cogs mr-2 text-teal-500"></i>2. service-worker.js</button>
                     <button data-action="dl-icon" class="w-full text-left p-2 rounded text-xs font-mono text-slate-600 bg-slate-100 active:bg-slate-200 dark:text-slate-300 dark:bg-slate-800 dark:active:bg-slate-700"><i class="fas fa-image mr-2 text-blue-500"></i>3. icon-192.png</button>
@@ -248,11 +176,9 @@
     <input type="file" id="restore-input" class="hidden" accept=".json">
 
     <script>
-    /** * TrafficGuard PWA v1.0.0 (Release Candidate)
-     * Optimized for performance, stability, and UX.
-     */
-
-    // --- State & Config ---
+    /** TrafficGuard PWA v1.5.0 */
+    
+    // --- Config & State ---
     const STATE = {
         googleApiKey: localStorage.getItem('trafficGuardApiKey') || '',
         currentDate: new Date(),
@@ -260,73 +186,39 @@
         allData: {},
         labelTrees: { company: [], jobType: [], teamName: [], workDetail: [] },
         nextLabelId: 1,
-        // UI State
-        calendarView: 'day', // 'day', 'month', 'year'
+        calendarView: 'day',
         modalDragging: false,
         modalStartY: 0
     };
 
     const DOM = {
-        body: document.body,
-        sideMenu: document.getElementById('side-menu'),
-        backdrops: {
-            menu: document.getElementById('sidemenu-backdrop'),
-            modal: document.getElementById('modal-backdrop'),
-            dialog: document.getElementById('dialog-modal-backdrop')
-        },
-        toggles: {
-            dark: document.getElementById('dark-mode-toggle')
-        },
-        displays: {
-            date: document.getElementById('current-date-display'),
-            daily: document.getElementById('daily-info-display'),
-            sites: document.getElementById('sites-list')
-        },
-        modal: {
-            container: document.getElementById('modal-content'),
-            body: document.getElementById('modal-body'),
-            handle: document.getElementById('modal-drag-handle')
-        },
-        dialog: {
-            content: document.getElementById('dialog-modal-content')
-        },
-        toast: document.getElementById('toast'),
-        inputRestore: document.getElementById('restore-input')
+        body: document.body, sideMenu: document.getElementById('side-menu'),
+        backdrops: { menu: document.getElementById('sidemenu-backdrop'), modal: document.getElementById('modal-backdrop'), dialog: document.getElementById('dialog-modal-backdrop') },
+        toggles: { dark: document.getElementById('dark-mode-toggle') },
+        displays: { date: document.getElementById('current-date-display'), daily: document.getElementById('daily-info-display'), sites: document.getElementById('sites-list') },
+        modal: { container: document.getElementById('modal-content'), body: document.getElementById('modal-body'), handle: document.getElementById('modal-drag-handle') },
+        dialog: { content: document.getElementById('dialog-modal-content') },
+        toast: document.getElementById('toast'), inputRestore: document.getElementById('restore-input')
     };
 
     // --- Utils ---
     const Utils = {
         formatKey: (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`,
-        
-        parseAddress: (full) => {
-            const match = full.match(/〒(\d{3}-\d{4})/);
-            return match ? { postal: match[1], addr: full.replace(match[0], '').trim() } 
-                         : { postal: '', addr: full };
-        },
-
+        parseAddress: (full) => { const m = full.match(/〒(\d{3}-\d{4})/); return m ? { postal: m[1], addr: full.replace(m[0], '').trim() } : { postal: '', addr: full }; },
         getTodayData: () => {
             const key = Utils.formatKey(STATE.currentDate);
-            if (!STATE.allData[key]) {
-                STATE.allData[key] = { 
-                    dailyInfo: { company:'', jobType:'', teamName:'', projectName:'', notes:'' }, 
-                    sites: [] 
-                };
-            }
+            if (!STATE.allData[key]) STATE.allData[key] = { dailyInfo: { company:'', jobType:'', teamName:'', projectName:'', notes:'' }, sites: [] };
             return STATE.allData[key];
         },
-
         showToast: (msg, type = 'success') => {
             const icon = type === 'error' ? 'fa-exclamation-triangle text-red-400' : 'fa-check text-emerald-400';
-            DOM.toast.innerHTML = `<i class="fas ${icon} mr-2"></i>${msg}`;
-            DOM.toast.classList.add('show');
+            DOM.toast.innerHTML = `<i class="fas ${icon} mr-2"></i>${msg}`; DOM.toast.classList.add('show');
             setTimeout(() => DOM.toast.classList.remove('show'), 3000);
         },
-
         downloadFile: (name, content) => {
             const blob = new Blob([content], { type: 'text/plain' });
             const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url; a.download = name; a.style.display = 'none';
+            const a = document.createElement('a'); a.href = url; a.download = name; a.style.display = 'none';
             document.body.appendChild(a); a.click();
             setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
         }
@@ -335,202 +227,106 @@
     // --- Storage ---
     const Storage = {
         save: () => localStorage.setItem('trafficGuardData', JSON.stringify(STATE.allData)),
-        load: () => {
-            const d = localStorage.getItem('trafficGuardData');
-            if (d) STATE.allData = JSON.parse(d);
-        },
+        load: () => { const d = localStorage.getItem('trafficGuardData'); if (d) STATE.allData = JSON.parse(d); },
         saveLabels: () => localStorage.setItem('trafficGuardLabelTrees', JSON.stringify(STATE.labelTrees)),
         loadLabels: () => {
             const t = localStorage.getItem('trafficGuardLabelTrees');
-            if (t) { 
-                STATE.labelTrees = JSON.parse(t);
-                // Recalculate next ID
-                let max = 0;
-                Object.values(STATE.labelTrees).forEach(tree => {
-                    if (Array.isArray(tree)) tree.forEach(n => max = Math.max(max, n.id));
-                });
-                STATE.nextLabelId = max + 1;
-            }
+            if (t) { STATE.labelTrees = JSON.parse(t); let max = 0; Object.values(STATE.labelTrees).forEach(tree => { if (Array.isArray(tree)) tree.forEach(n => max = Math.max(max, n.id)); }); STATE.nextLabelId = max + 1; }
         },
         saveApiKey: (k) => { STATE.googleApiKey = k; localStorage.setItem('trafficGuardApiKey', k); }
     };
 
     // --- UI Logic ---
     const UI = {
-        initTheme: () => {
-            // Theme already handled by anti-flash script, just sync toggle
-            const isDark = document.documentElement.classList.contains('dark');
-            DOM.toggles.dark.checked = isDark;
-        },
-
+        initTheme: () => { const isDark = document.documentElement.classList.contains('dark'); DOM.toggles.dark.checked = isDark; },
         toggleTheme: () => {
             const isDark = document.documentElement.classList.toggle('dark');
             localStorage.setItem('theme', isDark ? 'dark' : 'light');
             document.querySelector('meta[name="theme-color"][media="(prefers-color-scheme: dark)"]').setAttribute('content', '#0f172a');
             document.querySelector('meta[name="theme-color"][media="(prefers-color-scheme: light)"]').setAttribute('content', '#f8fafc');
         },
-
         openMenu: () => { DOM.backdrops.menu.classList.add('active'); DOM.sideMenu.classList.add('active'); },
         closeMenu: () => { DOM.backdrops.menu.classList.remove('active'); DOM.sideMenu.classList.remove('active'); },
-
-        // --- Render Main Page ---
         renderPage: () => {
             const d = STATE.currentDate;
             const dayStr = ['日','月','火','水','木','金','土'][d.getDay()];
             DOM.displays.date.innerHTML = `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} <span class="font-normal opacity-80">(${dayStr})</span>`;
-
             const data = Utils.getTodayData();
-            
-            // Render Daily Info
             const di = data.dailyInfo;
             const row = (label, val) => `<div class="flex flex-col sm:flex-row sm:items-baseline border-b border-dashed border-slate-100 dark:border-slate-700/50 pb-2 last:border-0"><span class="text-[10px] font-bold text-slate-400 uppercase tracking-wide w-24 flex-shrink-0">${label}</span><span class="text-base font-medium text-slate-700 dark:text-slate-200 ${!val?'text-slate-400 italic':''}">${val||'未設定'}</span></div>`;
-            
-            DOM.displays.daily.innerHTML = `
-                ${row('会社名', di.company)}
-                ${row('仕事の種類', di.jobType)}
-                ${row('班名', di.teamName)}
-                ${row('工事名', di.projectName)}
-                <div class="pt-1"><span class="text-[10px] font-bold text-slate-400 uppercase tracking-wide block mb-1">備考</span><p class="text-sm text-slate-600 dark:text-slate-400 whitespace-pre-wrap bg-slate-50 dark:bg-slate-800/50 p-2 rounded-lg">${di.notes||'なし'}</p></div>
-            `;
-
-            // Render Sites
+            DOM.displays.daily.innerHTML = `${row('会社名', di.company)}${row('仕事の種類', di.jobType)}${row('班名', di.teamName)}${row('工事名', di.projectName)}<div class="pt-1"><span class="text-[10px] font-bold text-slate-400 uppercase tracking-wide block mb-1">備考</span><p class="text-sm text-slate-600 dark:text-slate-400 whitespace-pre-wrap bg-slate-50 dark:bg-slate-800/50 p-2 rounded-lg">${di.notes||'なし'}</p></div>`;
             if (data.sites.length === 0) {
                 DOM.displays.sites.innerHTML = `<div class="text-center py-12 opacity-40"><i class="fas fa-clipboard-list text-3xl text-slate-300 dark:text-slate-600 mb-2"></i><p class="text-xs">記録なし</p></div>`;
             } else {
                 DOM.displays.sites.innerHTML = data.sites.map((site, i) => {
                     const addrBtn = site.address ? `<a href="${site.mapLink}" target="_blank" class="inline-flex items-center text-[10px] font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded-md mt-2"><i class="fas fa-location-arrow mr-1"></i>${site.address}</a>` : '';
-                    return `
-                        <div class="modern-card p-4 relative mb-3 border-l-4 border-l-blue-500">
-                            <div class="flex justify-between items-start mb-1">
-                                <div class="flex items-center mb-1">
-                                    <span class="text-xl font-bold font-mono text-slate-800 dark:text-white mr-3">${site.time}</span>
-                                    <span class="px-2 py-0.5 rounded text-xs font-bold bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">${site.workDetail||'詳細なし'}</span>
-                                </div>
-                                <button data-action="edit-site" data-index="${i}" class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-50 dark:bg-slate-800 text-slate-400 active:text-blue-500"><i class="fas fa-pen text-xs"></i></button>
-                            </div>
-                            <p class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">${site.notes||''}</p>
-                            ${addrBtn}
-                        </div>
-                    `;
+                    return `<div class="modern-card p-4 relative mb-3 border-l-4 border-l-blue-500"><div class="flex justify-between items-start mb-1"><div class="flex items-center mb-1"><span class="text-xl font-bold font-mono text-slate-800 dark:text-white mr-3">${site.time}</span><span class="px-2 py-0.5 rounded text-xs font-bold bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">${site.workDetail||'詳細なし'}</span></div><button data-action="edit-site" data-index="${i}" class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-50 dark:bg-slate-800 text-slate-400 active:text-blue-500"><i class="fas fa-pen text-xs"></i></button></div><p class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">${site.notes||''}</p>${addrBtn}</div>`;
                 }).join('');
             }
         },
-
-        // --- Modals ---
-        openModal: (html) => {
-            DOM.modal.body.innerHTML = html;
-            DOM.backdrops.modal.classList.add('active');
-            DOM.modal.container.classList.add('active');
-            document.body.style.overflow = 'hidden';
-        },
-        closeModal: () => {
-            DOM.backdrops.modal.classList.remove('active');
-            DOM.modal.container.classList.remove('active');
-            DOM.modal.container.style.transform = ''; // Reset drag
-            document.body.style.overflow = '';
-        },
-
-        // --- Dialogs ---
+        openModal: (html) => { DOM.modal.body.innerHTML = html; DOM.backdrops.modal.classList.add('active'); DOM.modal.container.classList.add('active'); document.body.style.overflow = 'hidden'; },
+        closeModal: () => { DOM.backdrops.modal.classList.remove('active'); DOM.modal.container.classList.remove('active'); DOM.modal.container.style.transform = ''; document.body.style.overflow = ''; },
         openPrompt: (title, val, onOk, placeholder = '') => {
             DOM.dialog.content.innerHTML = `<div class="text-center"><p class="text-sm font-bold text-slate-800 dark:text-white mb-4">${title}</p><input id="dlg-in" class="modern-input w-full p-3 mb-6 text-sm" value="${val}" placeholder="${placeholder}"><div class="flex gap-3"><button id="dlg-cancel" class="flex-1 py-2.5 bg-slate-100 dark:bg-slate-700 rounded-lg text-xs font-bold">キャンセル</button><button id="dlg-ok" class="flex-1 py-2.5 bg-blue-600 text-white rounded-lg text-xs font-bold shadow-lg">OK</button></div></div>`;
             DOM.backdrops.dialog.classList.add('active'); DOM.backdrops.dialog.classList.remove('hidden');
             const inp = document.getElementById('dlg-in'); inp.focus();
-            document.getElementById('dlg-ok').onclick = () => { if(inp.value.trim()){ onOk(inp.value.trim()); UI.closeDialog(); }};
-            document.getElementById('dlg-cancel').onclick = UI.closeDialog;
+            document.getElementById('dlg-ok').onclick = () => { if(inp.value.trim()){ onOk(inp.value.trim()); UI.closeDialog(); }}; document.getElementById('dlg-cancel').onclick = UI.closeDialog;
         },
         openConfirm: (msg, onYes) => {
             DOM.dialog.content.innerHTML = `<div class="text-center"><i class="fas fa-question-circle text-4xl text-blue-500 mb-4 opacity-80"></i><p class="text-sm font-bold text-slate-800 dark:text-white mb-6">${msg}</p><div class="flex gap-3"><button id="dlg-no" class="flex-1 py-2.5 bg-slate-100 dark:bg-slate-700 rounded-lg text-xs font-bold">キャンセル</button><button id="dlg-yes" class="flex-1 py-2.5 bg-blue-600 text-white rounded-lg text-xs font-bold shadow-lg">実行する</button></div></div>`;
             DOM.backdrops.dialog.classList.add('active'); DOM.backdrops.dialog.classList.remove('hidden');
-            document.getElementById('dlg-yes').onclick = () => { onYes(); UI.closeDialog(); };
-            document.getElementById('dlg-no').onclick = UI.closeDialog;
+            document.getElementById('dlg-yes').onclick = () => { onYes(); UI.closeDialog(); }; document.getElementById('dlg-no').onclick = UI.closeDialog;
         },
-        closeDialog: () => {
-            DOM.backdrops.dialog.classList.remove('active');
-            setTimeout(() => DOM.backdrops.dialog.classList.add('hidden'), 300);
-        }
+        closeDialog: () => { DOM.backdrops.dialog.classList.remove('active'); setTimeout(() => DOM.backdrops.dialog.classList.add('hidden'), 300); }
     };
 
-    // --- Calendar Logic ---
+    // --- Calendar ---
     const Calendar = {
         render: (animClass) => {
-            const container = document.getElementById('cal-container');
-            if (!container) return;
-            
-            const y = STATE.calendarDate.getFullYear();
-            const m = STATE.calendarDate.getMonth();
+            const container = document.getElementById('cal-container'); if (!container) return;
+            const y = STATE.calendarDate.getFullYear(), m = STATE.calendarDate.getMonth();
             let html = '';
-
-            // Header
-            const header = `
-                <div class="flex justify-between items-center mb-4 px-2">
-                    <button onclick="Handlers.calMove(-1)" class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center active:bg-slate-200 dark:active:bg-slate-700 transition-colors"><i class="fas fa-chevron-left"></i></button>
-                    <button onclick="Handlers.calToggleView()" class="text-xl font-bold text-slate-800 dark:text-white px-4 py-2 rounded-xl active:bg-slate-100 dark:active:bg-slate-800 transition-colors flex items-center">${STATE.calendarView === 'day' ? `${y}年 ${m+1}月 <i class="fas fa-caret-down ml-2 text-sm opacity-50"></i>` : STATE.calendarView === 'year' ? '年を選択' : '月を選択'}</button>
-                    <button onclick="Handlers.calMove(1)" class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center active:bg-slate-200 dark:active:bg-slate-700 transition-colors"><i class="fas fa-chevron-right"></i></button>
-                </div>`;
-
+            const header = `<div class="flex justify-between items-center mb-4 px-2"><button onclick="Handlers.calMove(-1)" class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center active:bg-slate-200 dark:active:bg-slate-700 transition-colors"><i class="fas fa-chevron-left"></i></button><button onclick="Handlers.calToggleView()" class="text-xl font-bold text-slate-800 dark:text-white px-4 py-2 rounded-xl active:bg-slate-100 dark:active:bg-slate-800 transition-colors flex items-center">${STATE.calendarView === 'day' ? `${y}年 ${m+1}月 <i class="fas fa-caret-down ml-2 text-sm opacity-50"></i>` : STATE.calendarView === 'year' ? '年を選択' : '月を選択'}</button><button onclick="Handlers.calMove(1)" class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center active:bg-slate-200 dark:active:bg-slate-700 transition-colors"><i class="fas fa-chevron-right"></i></button></div>`;
             if (STATE.calendarView === 'day') {
-                const first = new Date(y, m, 1).getDay();
-                const days = new Date(y, m + 1, 0).getDate();
-                const today = Utils.formatKey(new Date());
-                const current = Utils.formatKey(STATE.currentDate);
-                
-                let grid = `<div class="grid grid-cols-7 gap-1 text-center text-xs font-bold text-slate-400 mb-2"><div class="text-red-400">日</div><div>月</div><div>火</div><div>水</div><div>木</div><div>金</div><div class="text-blue-400">土</div></div>`;
-                grid += `<div class="grid grid-cols-7 gap-1 auto-rows-fr h-64">`;
+                const first = new Date(y, m, 1).getDay(), days = new Date(y, m + 1, 0).getDate(), today = Utils.formatKey(new Date()), current = Utils.formatKey(STATE.currentDate);
+                let grid = `<div class="grid grid-cols-7 gap-1 text-center text-xs font-bold text-slate-400 mb-2"><div class="text-red-400">日</div><div>月</div><div>火</div><div>水</div><div>木</div><div>金</div><div class="text-blue-400">土</div></div><div class="grid grid-cols-7 gap-1 auto-rows-fr h-64">`;
                 for(let i=0; i<first; i++) grid += `<div></div>`;
                 for(let d=1; d<=days; d++) {
                     const k = Utils.formatKey(new Date(y, m, d));
                     let cls = 'calendar-day cursor-pointer active:bg-slate-100 dark:active:bg-slate-800 text-slate-700 dark:text-slate-300';
                     if (STATE.allData[k] && (STATE.allData[k].sites.length > 0 || STATE.allData[k].dailyInfo.company)) cls += ' has-record';
-                    if (k === today) cls += ' is-today';
-                    if (k === current) cls += ' is-selected';
+                    if (k === today) cls += ' is-today'; if (k === current) cls += ' is-selected';
                     grid += `<div onclick="Handlers.calSelect('${k}')" class="${cls}">${d}</div>`;
                 }
-                grid += `</div>`;
-                html = header + `<div class="${animClass||''}">${grid}</div>`;
+                html = header + `<div class="${animClass||''}">${grid}</div></div>`;
             } else if (STATE.calendarView === 'year') {
                 let years = `<div class="grid grid-cols-4 gap-4 h-72 overflow-y-auto animate-fade-in content-start">`;
-                for(let i = y-10; i<=y+10; i++) {
-                    let cls = i === y ? "bg-blue-600 text-white" : "text-slate-700 dark:text-slate-300 active:bg-slate-100 dark:active:bg-slate-800";
-                    years += `<div onclick="Handlers.calSelectYear(${i})" class="p-3 rounded-xl text-center font-bold text-sm cursor-pointer ${cls}">${i}</div>`;
-                }
+                for(let i = y-10; i<=y+10; i++) years += `<div onclick="Handlers.calSelectYear(${i})" class="p-3 rounded-xl text-center font-bold text-sm cursor-pointer ${i === y ? "bg-blue-600 text-white" : "text-slate-700 dark:text-slate-300 active:bg-slate-100 dark:active:bg-slate-800"}">${i}</div>`;
                 html = header + years + `</div>`;
-            } else { // Month
+            } else {
                 let months = `<div class="grid grid-cols-3 gap-4 h-72 animate-fade-in content-center">`;
-                for(let i=0; i<12; i++) {
-                    let cls = i === m ? "bg-blue-600 text-white" : "text-slate-700 dark:text-slate-300 active:bg-slate-100 dark:active:bg-slate-800";
-                    months += `<div onclick="Handlers.calSelectMonth(${i})" class="p-4 rounded-xl text-center font-bold cursor-pointer ${cls}">${i+1}月</div>`;
-                }
+                for(let i=0; i<12; i++) months += `<div onclick="Handlers.calSelectMonth(${i})" class="p-4 rounded-xl text-center font-bold cursor-pointer ${i === m ? "bg-blue-600 text-white" : "text-slate-700 dark:text-slate-300 active:bg-slate-100 dark:active:bg-slate-800"}">${i+1}月</div>`;
                 html = header + months + `</div>`;
             }
-            
             container.innerHTML = html;
-            
-            // Bind Swipe
             if (STATE.calendarView === 'day') {
                 const el = container.lastElementChild;
-                let sx = 0;
-                el.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
-                el.addEventListener('touchend', e => {
-                    if (Math.abs(e.changedTouches[0].clientX - sx) > 50) Handlers.calMove(e.changedTouches[0].clientX - sx > 0 ? -1 : 1);
-                }, {passive:true});
+                let sx = 0; el.addEventListener('touchstart', e => sx = e.touches[0].clientX, {passive:true});
+                el.addEventListener('touchend', e => { if (Math.abs(e.changedTouches[0].clientX - sx) > 50) Handlers.calMove(e.changedTouches[0].clientX - sx > 0 ? -1 : 1); }, {passive:true});
             }
         },
         show: () => {
-            STATE.calendarView = 'day';
-            STATE.calendarDate = new Date(STATE.currentDate);
+            STATE.calendarView = 'day'; STATE.calendarDate = new Date(STATE.currentDate);
             UI.openModal(`<div id="cal-container" class="min-h-[350px]"></div><button onclick="Handlers.goToday()" class="w-full py-3 mt-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-xl font-bold text-sm active:bg-slate-200 dark:active:bg-slate-700 transition-colors">今日に戻る</button>`);
             Calendar.render();
         }
     };
 
-    // --- Handlers (Global) ---
+    // --- Handlers ---
     const Handlers = {
-        // App Actions
         prevDay: () => { STATE.currentDate.setDate(STATE.currentDate.getDate()-1); UI.renderPage(); },
         nextDay: () => { STATE.currentDate.setDate(STATE.currentDate.getDate()+1); UI.renderPage(); },
         goToday: () => { STATE.currentDate = new Date(); UI.renderPage(); UI.closeModal(); },
-        
-        // Calendar
         calMove: (dir) => {
             const anim = dir > 0 ? 'animate-slide-in-right' : 'animate-slide-in-left';
             if (STATE.calendarView === 'day') STATE.calendarDate.setMonth(STATE.calendarDate.getMonth() + dir);
@@ -542,138 +338,85 @@
         calSelectYear: (y) => { STATE.calendarDate.setFullYear(y); STATE.calendarView = 'month'; Calendar.render('animate-fade-in'); },
         calSelectMonth: (m) => { STATE.calendarDate.setMonth(m); STATE.calendarView = 'day'; Calendar.render('animate-fade-in'); },
         calSelect: (dStr) => { STATE.currentDate = new Date(dStr); UI.renderPage(); UI.closeModal(); },
-
-        // Forms
         saveDailyInfo: () => {
             const data = Utils.getTodayData();
-            data.dailyInfo = {
-                company: document.getElementById('company-val').value,
-                jobType: document.getElementById('jobType-val').value,
-                teamName: document.getElementById('teamName-val').value,
-                projectName: document.getElementById('proj-in').value,
-                notes: document.getElementById('note-in').value
-            };
+            data.dailyInfo = { company: document.getElementById('company-val').value, jobType: document.getElementById('jobType-val').value, teamName: document.getElementById('teamName-val').value, projectName: document.getElementById('proj-in').value, notes: document.getElementById('note-in').value };
             Storage.save(); UI.renderPage(); UI.closeModal(); Utils.showToast('保存しました');
         },
         saveSite: (index) => {
             try {
                 const data = Utils.getTodayData();
-                const postal = document.getElementById('zip-in').value;
-                const addr = document.getElementById('addr-in').value;
-                const site = {
-                    time: document.getElementById('time-in').value,
-                    workDetail: document.getElementById('wd-val').value,
-                    notes: document.getElementById('s-note-in').value,
-                    address: postal ? `〒${postal} ${addr}` : addr,
-                    mapLink: addr ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr)}` : ''
-                };
-                
-                if (index === null) data.sites.push(site);
-                else data.sites[index] = site;
-                
+                const postal = document.getElementById('zip-in').value, addr = document.getElementById('addr-in').value;
+                const site = { time: document.getElementById('time-in').value, workDetail: document.getElementById('wd-val').value, notes: document.getElementById('s-note-in').value, address: postal ? `〒${postal} ${addr}` : addr, mapLink: addr ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr)}` : '' };
+                if (index === null) data.sites.push(site); else data.sites[index] = site;
                 data.sites.sort((a,b) => a.time.localeCompare(b.time));
                 Storage.save(); UI.renderPage(); UI.closeModal(); Utils.showToast(index===null?'追加しました':'更新しました');
             } catch(e) { Utils.showToast('保存エラー', 'error'); }
         },
         deleteSite: (index) => {
-            UI.closeModal();
-            setTimeout(() => UI.openConfirm('削除しますか？', () => {
-                Utils.getTodayData().sites.splice(index, 1);
-                Storage.save(); UI.renderPage(); Utils.showToast('削除しました');
-            }), 300);
+            UI.closeModal(); setTimeout(() => UI.openConfirm('削除しますか？', () => { Utils.getTodayData().sites.splice(index, 1); Storage.save(); UI.renderPage(); Utils.showToast('削除しました'); }), 300);
         },
-
-        // PWA Gen
         pwaGen: {
             manifest: () => {
                 const m = { name: "現場記録アプリ", short_name: "現場記録", start_url: "./index.html", display: "standalone", background_color: "#f8fafc", theme_color: "#0f172a", orientation: "portrait", icons: [{ src: "icon-192.png", sizes: "192x192", type: "image/png" }] };
-                Utils.downloadFile('manifest.json', JSON.stringify(m, null, 2));
-                Utils.showToast('manifest.jsonを保存');
+                Utils.downloadFile('manifest.json', JSON.stringify(m, null, 2)); Utils.showToast('manifest.jsonを保存');
             },
             sw: () => {
-                const s = `const C='tg-v1.0.0';const A=['./','./index.html','https://cdn.tailwindcss.com','https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'];self.addEventListener('install',e=>e.waitUntil(caches.open(C).then(c=>c.addAll(A))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request))));`;
-                Utils.downloadFile('service-worker.js', s.trim());
-                Utils.showToast('service-worker.jsを保存');
+                const s = `const CACHE_NAME='tg-v1.5.0';const ASSETS=['./','./index.html','https://cdn.tailwindcss.com','https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'];self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(ASSETS))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request))));`;
+                Utils.downloadFile('service-worker.js', s.trim()); Utils.showToast('service-worker.jsを保存');
             },
             icon: () => {
-                const c = document.createElement('canvas'); c.width=192; c.height=192; const x = c.getContext('2d');
-                x.fillStyle='#0f172a'; x.fillRect(0,0,192,192); x.fillStyle='#fff'; x.font='bold 80px sans-serif'; x.textAlign='center'; x.textBaseline='middle'; x.fillText('TG',96,96);
+                const c = document.createElement('canvas'); c.width=192; c.height=192; const x = c.getContext('2d'); x.fillStyle='#0f172a'; x.fillRect(0,0,192,192); x.fillStyle='#fff'; x.font='bold 80px sans-serif'; x.textAlign='center'; x.textBaseline='middle'; x.fillText('TG',96,96);
                 const a = document.createElement('a'); a.href = c.toDataURL('image/png'); a.download = 'icon-192.png'; a.click();
             }
         }
     };
-    
-    // Attach Global Handlers
     window.Handlers = Handlers;
 
-    // --- Initialization ---
+    // --- Boot ---
     window.onload = () => {
-        // Load Data
         STATE.googleApiKey = localStorage.getItem('trafficGuardApiKey') || '';
-        Storage.load();
-        Storage.loadLabels();
+        Storage.load(); Storage.loadLabels();
+        UI.initTheme(); UI.renderPage();
         
-        // Setup UI
-        UI.initTheme();
-        UI.renderPage();
-        
-        // Load Maps if Key exists
-        if(STATE.googleApiKey) {
-            const s = document.createElement('script');
-            s.src = `https://maps.googleapis.com/maps/api/js?key=${STATE.googleApiKey}&libraries=places`;
-            document.head.appendChild(s);
-        }
+        // PWA Auto Register
+        if ('serviceWorker' in navigator) { navigator.serviceWorker.register('./service-worker.js').catch(() => {}); }
 
-        // --- Event Listeners (Delegation) ---
+        if(STATE.googleApiKey) { const s = document.createElement('script'); s.src = `https://maps.googleapis.com/maps/api/js?key=${STATE.googleApiKey}&libraries=places`; document.head.appendChild(s); }
+
         document.body.addEventListener('click', (e) => {
-            const target = e.target.closest('[data-action]');
-            if (!target) return;
-            const action = target.dataset.action;
-            
-            // Clean up focus for mobile tap style
-            target.blur();
-
-            // Menu interactions
+            const target = e.target.closest('[data-action]'); if (!target) return;
+            const action = target.dataset.action; target.blur();
             if (action === 'toggle-menu') { DOM.sideMenu.classList.contains('active') ? UI.closeMenu() : UI.openMenu(); return; }
-            if (action === 'close-menu') { UI.closeMenu(); return; }
-            if (['backup','restore','settings','manage-api-key','show-history','show-about'].includes(action)) UI.closeMenu();
+            if (action === 'close-menu' || ['backup','restore','settings','manage-api-key','show-history','show-about'].includes(action)) UI.closeMenu();
 
-            // Switch Logic
             switch(action) {
                 case 'prev-day': Handlers.prevDay(); break;
                 case 'next-day': Handlers.nextDay(); break;
                 case 'show-calendar': Calendar.show(); break;
-                
                 case 'edit-daily-info': showDailyInfoModal(); break;
                 case 'save-daily-info': Handlers.saveDailyInfo(); break;
                 case 'add-site': showSiteModal(null); break;
                 case 'edit-site': showSiteModal(Utils.getTodayData().sites[target.dataset.index], parseInt(target.dataset.index)); break;
                 case 'save-site': Handlers.saveSite(target.dataset.index === 'null' ? null : parseInt(target.dataset.index)); break;
                 case 'del-site': Handlers.deleteSite(parseInt(target.dataset.index)); break;
-
-                // Settings & Tools
                 case 'toggle-accordion': 
                     const c = document.getElementById(target.dataset.target); c.classList.toggle('hidden'); 
                     target.querySelector('.fa-chevron-down').classList.toggle('rotate-180'); break;
                 case 'backup': 
-                    const b = new Blob([JSON.stringify({dataType:'TrafficGuardAppBackup', version:'1.0.0', allData:STATE.allData, labelTrees:STATE.labelTrees},null,2)], {type:'application/json'});
-                    const url = URL.createObjectURL(b); const a = document.createElement('a'); a.href = url; a.download = `TG_Backup_${Utils.formatKey(new Date())}.json`; a.click(); break;
+                    const b = new Blob([JSON.stringify({dataType:'TrafficGuardAppBackup', version:'1.5.0', allData:STATE.allData, labelTrees:STATE.labelTrees},null,2)], {type:'application/json'});
+                    Utils.downloadFile(`TG_Backup_${Utils.formatKey(new Date())}.json`, JSON.stringify({dataType:'TrafficGuardAppBackup', version:'1.5.0', allData:STATE.allData, labelTrees:STATE.labelTrees},null,2)); break;
                 case 'restore': DOM.inputRestore.click(); break;
                 case 'manage-api-key': UI.openPrompt('APIキー設定', STATE.googleApiKey, (k)=>{Storage.saveApiKey(k); Utils.showToast('保存しました');}, 'APIキーを入力'); break;
-                
-                // Dev / PWA
                 case 'dl-manifest': Handlers.pwaGen.manifest(); break;
                 case 'dl-sw': Handlers.pwaGen.sw(); break;
                 case 'dl-icon': Handlers.pwaGen.icon(); break;
-                
-                // Modals
-                case 'show-history': UI.openModal(`<h3 class="text-lg font-bold text-slate-800 dark:text-white mb-4">更新履歴</h3><div class="pl-4 border-l-2 border-blue-500 space-y-1"><h4 class="font-bold text-slate-800 dark:text-white">v1.0.0</h4><p class="text-xs text-slate-500">Official Release</p><ul class="list-disc list-inside text-sm text-slate-600 dark:text-slate-400"><li>現場記録アプリ 正式リリース</li><li>PWA完全対応・オフライン動作</li><li>地図連携・住所自動入力</li></ul></div><button onclick="UI.closeModal()" class="w-full mt-6 py-3 bg-slate-100 dark:bg-slate-800 rounded-xl font-bold text-slate-600 dark:text-slate-400">閉じる</button>`); break;
-                case 'show-about': UI.openModal(`<div class="text-center py-6"><i class="fas fa-shield-alt text-5xl text-blue-500 mb-4"></i><h3 class="text-xl font-bold text-slate-800 dark:text-white">現場記録アプリ</h3><p class="text-slate-500 text-sm mt-1">v1.0.0</p><p class="mt-4 text-slate-600 dark:text-slate-400 text-sm">交通誘導員の業務効率化のために設計された<br>オフライン対応PWAです。</p><button onclick="UI.closeModal()" class="w-full mt-8 py-3 bg-slate-100 dark:bg-slate-800 rounded-xl font-bold text-slate-600 dark:text-slate-400">閉じる</button></div>`); break;
+                case 'show-history': UI.openModal(`<h3 class="text-lg font-bold text-slate-800 dark:text-white mb-4">更新履歴</h3><div class="pl-4 border-l-2 border-blue-500 space-y-1"><h4 class="font-bold text-slate-800 dark:text-white">v1.5.0</h4><p class="text-xs text-slate-500">Major Update</p><ul class="list-disc list-inside text-sm text-slate-600 dark:text-slate-400"><li>PWAインストール機能の完全修正</li><li>マニフェストファイル連携の強化</li><li>全体的な安定性の向上</li></ul></div><button onclick="UI.closeModal()" class="w-full mt-6 py-3 bg-slate-100 dark:bg-slate-800 rounded-xl font-bold text-slate-600 dark:text-slate-400">閉じる</button>`); break;
+                case 'show-about': UI.openModal(`<div class="text-center py-6"><i class="fas fa-shield-alt text-5xl text-blue-500 mb-4"></i><h3 class="text-xl font-bold text-slate-800 dark:text-white">現場記録アプリ</h3><p class="text-slate-500 text-sm mt-1">v1.5.0</p><p class="mt-4 text-slate-600 dark:text-slate-400 text-sm">交通誘導員の業務効率化のために設計された<br>オフライン対応PWAです。</p><button onclick="UI.closeModal()" class="w-full mt-8 py-3 bg-slate-100 dark:bg-slate-800 rounded-xl font-bold text-slate-600 dark:text-slate-400">閉じる</button></div>`); break;
                 case 'settings': showLabelManagementModal(); break;
             }
         });
 
-        // Other Listeners
         DOM.toggles.dark.addEventListener('change', UI.toggleTheme);
         DOM.inputRestore.addEventListener('change', (e) => {
             const f = e.target.files[0]; if(!f)return;
@@ -682,84 +425,34 @@
             }; r.readAsText(f);
         });
 
-        // Modal Swipe
         DOM.modal.handle.addEventListener('touchstart', e => { STATE.modalStartY = e.touches[0].clientY; STATE.modalDragging = true; DOM.modal.container.style.transition = 'none'; }, {passive:true});
         DOM.modal.handle.addEventListener('touchmove', e => { if(!STATE.modalDragging)return; const d = e.touches[0].clientY - STATE.modalStartY; if(d>0) DOM.modal.container.style.transform = `translateY(${d}px)`; }, {passive:true});
         DOM.modal.handle.addEventListener('touchend', () => { STATE.modalDragging = false; DOM.modal.container.style.transition = 'transform 0.3s cubic-bezier(0.16,1,0.3,1)'; if(parseInt(DOM.modal.container.style.transform.replace('translateY(','')) > 100) UI.closeModal(); else DOM.modal.container.style.transform = ''; });
-        DOM.backdrops.modal.addEventListener('click', UI.closeModal);
-        DOM.backdrops.menu.addEventListener('click', UI.closeMenu);
+        DOM.backdrops.modal.addEventListener('click', UI.closeModal); DOM.backdrops.menu.addEventListener('click', UI.closeMenu);
     };
 
-    // --- Complex Modal Builders (Labels & Sites) ---
-    function showDailyInfoModal() {
-        const di = Utils.getTodayData().dailyInfo;
-        const grp = (l,id) => `<div class="mb-4"><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">${l}</label><div id="${id}-con"></div><input type="hidden" id="${id}-val"></div>`;
-        UI.openModal(`<h3 class="text-lg font-bold text-slate-800 dark:text-white mb-6 px-1">業務情報の編集</h3><div class="space-y-1">${grp('会社名','company')} ${grp('仕事の種類','jobType')} ${grp('班名','teamName')}<div class="mb-4"><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">工事名</label><input id="proj-in" class="modern-input w-full p-3 text-sm" value="${di.projectName||''}"></div><div class="mb-6"><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">備考</label><textarea id="note-in" class="modern-input w-full p-3 h-24 text-sm resize-none">${di.notes||''}</textarea></div><div class="flex gap-3"><button onclick="UI.closeModal()" class="flex-1 py-3.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-xl font-bold text-sm">キャンセル</button><button data-action="save-daily-info" class="flex-1 py-3.5 bg-blue-600 text-white rounded-xl font-bold shadow-lg shadow-blue-500/20 text-sm">保存</button></div></div>`);
-        setupDropdown('company', di.company); setupDropdown('jobType', di.jobType); setupDropdown('teamName', di.teamName);
-    }
-
-    async function showSiteModal(data, idx) {
-        const isNew = !data;
-        const d = data || { time: new Date().toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'}), workDetail:'', notes:'', address:'' };
-        const {postal, addr} = Utils.parseAddress(d.address);
-        const safeIdx = idx !== null ? idx : 'null';
-        
-        UI.openModal(`<div class="flex justify-between items-center mb-6 px-1"><h3 class="text-lg font-bold text-slate-800 dark:text-white">${isNew?'現場追加':'記録編集'}</h3>${!isNew ? `<button data-action="del-site" data-index="${safeIdx}" class="text-red-500 text-xs font-bold px-3 py-1 bg-red-50 dark:bg-red-900/20 rounded-lg">削除</button>`:''}</div>${isNew ? `<div id="map-area" class="w-full h-56 bg-slate-100 dark:bg-slate-800 rounded-2xl mb-5 flex items-center justify-center border border-slate-200 dark:border-slate-700 relative overflow-hidden text-xs text-slate-400"><i class="fas fa-map-marker-alt mr-1"></i>地図読み込み中...</div>` : ''}<div class="grid grid-cols-12 gap-3 mb-4"><div class="col-span-4"><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">郵便番号</label><input id="zip-in" class="modern-input w-full p-3 text-sm" value="${postal}" placeholder="000-0000"></div><div class="col-span-8"><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">住所</label><input id="addr-in" class="modern-input w-full p-3 text-sm" value="${addr}"></div></div><div class="grid grid-cols-2 gap-3 mb-4"><div><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">作業内容</label><div id="wd-con"></div><input type="hidden" id="wd-val"></div><div><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">時間</label><input id="time-in" type="time" class="modern-input w-full p-2.5 text-center font-mono text-lg tracking-widest bg-slate-50 dark:bg-slate-800 h-[42px]" value="${d.time}"></div></div><div class="mb-6"><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">備考</label><textarea id="s-note-in" class="modern-input w-full p-3 h-24 text-sm resize-none">${d.notes||''}</textarea></div><div class="flex gap-3"><button onclick="UI.closeModal()" class="flex-1 py-3.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-xl font-bold text-sm">キャンセル</button><button data-action="save-site" data-index="${safeIdx}" class="flex-1 py-3.5 bg-blue-600 text-white rounded-xl font-bold shadow-lg shadow-blue-500/20 text-sm">保存</button></div>`);
-        setupDropdown('workDetail', d.workDetail, 'wd');
-        
-        // Map Logic
-        const zIn=document.getElementById('zip-in'), aIn=document.getElementById('addr-in'), nIn=document.getElementById('s-note-in');
-        aIn.addEventListener('blur',()=>{if(aIn.value&&STATE.googleApiKey)new google.maps.Geocoder().geocode({address:aIn.value},(r,s)=>{if(s==='OK'){const p=Utils.parseAddress(r[0].formatted_address.replace('日本、',''));zIn.value=p.postal;aIn.value=p.addr;}});});
-        
-        if(isNew && STATE.googleApiKey){
-            navigator.geolocation.getCurrentPosition(async pos => {
-                const lat=pos.coords.latitude, lng=pos.coords.longitude;
-                const mDiv=document.getElementById('map-area');
-                if(mDiv) {
-                    mDiv.innerHTML='';
-                    const map=new google.maps.Map(mDiv,{center:{lat,lng},zoom:17,disableDefaultUI:true});
-                    const marker=new google.maps.Marker({position:{lat,lng},map,draggable:true});
-                    const updateLoc=async(lt,lg)=>{try{const r=await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lt},${lg}&key=${STATE.googleApiKey}&language=ja`);const d=await r.json();if(d.status==='OK'&&d.results[0]){const full=d.results[0].formatted_address.replace('日本、','').trim();const p=Utils.parseAddress(full);zIn.value=p.postal;aIn.value=p.addr;const poi=d.results.find(res=>res.types.includes('point_of_interest')||res.types.includes('establishment'));if(poi&&nIn.value===''){const pn=poi.formatted_address.replace('日本、','').trim();if(pn!==p.addr&&pn.length>p.addr.length)nIn.value=pn;}}}catch{}};
-                    updateLoc(lat,lng);
-                    marker.addListener('dragend',e=>updateLoc(e.latLng.lat(),e.latLng.lng()));
-                }
-            }, ()=>document.getElementById('map-area').innerHTML='<span class="text-red-400">位置情報エラー</span>', {enableHighAccuracy:true});
-        } else if (isNew) { document.getElementById('map-area').innerHTML='<span class="text-amber-500">APIキー未設定</span>'; }
-    }
-
+    // Modal Helpers
     function showLabelManagementModal() {
         UI.openModal(`<h3 class="text-lg font-bold text-slate-800 dark:text-white mb-4 px-1">ラベル管理</h3><select id="l-cat" class="modern-input w-full p-3 text-sm mb-4"><option value="company">会社名</option><option value="jobType">仕事の種類</option><option value="teamName">班名</option><option value="workDetail">作業内容</option></select><div id="l-tree" class="max-h-60 overflow-y-auto bg-slate-50 dark:bg-slate-800/50 rounded-xl p-2 mb-4 space-y-2"></div><button id="add-r" class="w-full py-3 bg-blue-600 text-white rounded-xl font-bold text-xs shadow-lg mb-2">＋ 親ラベル追加</button><button onclick="UI.closeModal()" class="w-full py-3 bg-slate-100 dark:bg-slate-800 rounded-xl font-bold text-xs">完了</button>`);
         const sel=document.getElementById('l-cat'), tree=document.getElementById('l-tree');
-        const ren=()=>{ 
-            const c=sel.value, roots=STATE.labelTrees[c].filter(n=>!n.parentId); tree.innerHTML=''; 
-            const nUI=(n,d)=>{const el=document.createElement('div');el.className=`flex justify-between items-center p-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 ml-${d*4}`;el.style.marginLeft=(d*12)+'px';el.innerHTML=`<span class="text-xs font-bold text-slate-700 dark:text-slate-300">${n.name}</span><div class="flex gap-2"><button class="text-emerald-500" onclick="window.addLChild(${n.id})"><i class="fas fa-plus"></i></button><button class="text-red-400" onclick="window.delLNode(${n.id})"><i class="fas fa-trash"></i></button></div>`;tree.appendChild(el);STATE.labelTrees[c].filter(k=>k.parentId===n.id).forEach(k=>nUI(k,d+1));}; 
-            if(roots.length)roots.forEach(n=>nUI(n,0));else tree.innerHTML='<p class="text-center text-xs text-slate-400 py-4">なし</p>'; 
-        };
+        const ren=()=>{ const c=sel.value, roots=STATE.labelTrees[c].filter(n=>!n.parentId); tree.innerHTML=''; const nUI=(n,d)=>{const el=document.createElement('div');el.className=`flex justify-between items-center p-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 ml-${d*4}`;el.style.marginLeft=(d*12)+'px';el.innerHTML=`<span class="text-xs font-bold text-slate-700 dark:text-slate-300">${n.name}</span><div class="flex gap-2"><button class="text-emerald-500" onclick="window.addLChild(${n.id})"><i class="fas fa-plus"></i></button><button class="text-red-400" onclick="window.delLNode(${n.id})"><i class="fas fa-trash"></i></button></div>`;tree.appendChild(el);STATE.labelTrees[c].filter(k=>k.parentId===n.id).forEach(k=>nUI(k,d+1));}; if(roots.length)roots.forEach(n=>nUI(n,0));else tree.innerHTML='<p class="text-center text-xs text-slate-400 py-4">なし</p>'; };
         sel.onchange=ren; ren();
         document.getElementById('add-r').onclick=()=>{UI.closeModal();setTimeout(()=>UI.openPrompt('親ラベル名','',n=>{STATE.labelTrees[sel.value].push({id:STATE.nextLabelId++,name:n,parentId:null});Storage.saveLabels();showLabelManagementModal();}),300);};
-        // Attach temporary globals for label buttons
         window.addLChild=(id)=>{UI.closeModal();setTimeout(()=>UI.openPrompt('子ラベル名','',n=>{STATE.labelTrees[sel.value].push({id:STATE.nextLabelId++,name:n,parentId:id});Storage.saveLabels();showLabelManagementModal();}),300);};
         window.delLNode=(id)=>{UI.closeModal();setTimeout(()=>UI.openConfirm('削除しますか？',()=>{const rm=(nid)=>{STATE.labelTrees[sel.value].filter(x=>x.parentId===nid).forEach(x=>rm(x.id));STATE.labelTrees[sel.value]=STATE.labelTrees[sel.value].filter(x=>x.id!==nid);};rm(id);Storage.saveLabels();showLabelManagementModal();}),300);};
     }
-
-    function setupDropdown(cat, val, idPrefix) {
-        const con = document.getElementById((idPrefix||cat)+'-con'); const hidden = document.getElementById((idPrefix||cat)+'-val');
-        function render(pId, depth, path) {
-            const kids = STATE.labelTrees[cat].filter(n => n.parentId === pId);
-            if (depth > 0 && kids.length === 0 && depth > path.length) return;
-            const sel = document.createElement('select'); sel.className = 'modern-input w-full p-2.5 mb-2 text-sm bg-[right_0.8rem_center] h-[42px]';
-            sel.innerHTML = `<option value="">${depth===0?'選択してください':'詳細を選択'}</option>`;
-            kids.forEach(k => sel.innerHTML += `<option value="${k.id}">${k.name}</option>`); sel.innerHTML += `<option value="other">その他</option>`;
-            con.appendChild(sel);
-            if (depth < path.length) { const f = kids.find(k => k.name === path[depth]); if(f) { sel.value = f.id; render(f.id, depth+1, path); } else { sel.value='other'; const inp=document.createElement('input'); inp.className='modern-input w-full p-2.5 mt-1 text-sm'; inp.value=path.slice(depth).join(' / '); inp.oninput=update; con.appendChild(inp); } }
-            sel.onchange = () => { while(sel.nextSibling) con.removeChild(sel.nextSibling); if(sel.value==='other'){const inp=document.createElement('input');inp.className='modern-input w-full p-2.5 mt-1 text-sm';inp.placeholder='内容を入力';inp.focus();inp.oninput=update;con.appendChild(inp);}else if(sel.value){render(parseInt(sel.value),depth+1,[]);} update(); }
-        }
-        function update() { const p=[]; con.querySelectorAll('select').forEach(s=>{if(s.value&&s.value!=='other')p.push(s.options[s.selectedIndex].text);}); const inp=con.querySelector('input'); if(inp&&inp.value.trim())p.push(inp.value.trim()); hidden.value=p.join(' / '); }
-        con.innerHTML=''; render(null,0,val?val.split(' / '):[]); hidden.value=val||'';
-    }
     
-    // Attach Global UI helper for HTML onclick attributes
-    window.UI = UI; 
+    function showSiteModal(data, idx) {
+        const isNew = !data, d = data || { time: new Date().toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'}), workDetail:'', notes:'', address:'' };
+        const {postal, addr} = Utils.parseAddress(d.address), safeIdx = idx !== null ? idx : 'null';
+        UI.openModal(`<div class="flex justify-between items-center mb-6 px-1"><h3 class="text-lg font-bold text-slate-800 dark:text-white">${isNew?'現場追加':'記録編集'}</h3>${!isNew ? `<button data-action="del-site" data-index="${safeIdx}" class="text-red-500 text-xs font-bold px-3 py-1 bg-red-50 dark:bg-red-900/20 rounded-lg">削除</button>`:''}</div>${isNew ? `<div id="map-area" class="w-full h-56 bg-slate-100 dark:bg-slate-800 rounded-2xl mb-5 flex items-center justify-center border border-slate-200 dark:border-slate-700 relative overflow-hidden text-xs text-slate-400"><i class="fas fa-map-marker-alt mr-1"></i>地図読み込み中...</div>` : ''}<div class="grid grid-cols-12 gap-3 mb-4"><div class="col-span-4"><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">郵便番号</label><input id="zip-in" class="modern-input w-full p-3 text-sm" value="${postal}" placeholder="000-0000"></div><div class="col-span-8"><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">住所</label><input id="addr-in" class="modern-input w-full p-3 text-sm" value="${addr}"></div></div><div class="grid grid-cols-2 gap-3 mb-4"><div><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">作業内容</label><div id="wd-con"></div><input type="hidden" id="wd-val"></div><div><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">時間</label><input id="time-in" type="time" class="modern-input w-full p-2.5 text-center font-mono text-lg tracking-widest bg-slate-50 dark:bg-slate-800 h-[42px]" value="${d.time}"></div></div><div class="mb-6"><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">備考</label><textarea id="s-note-in" class="modern-input w-full p-3 h-24 text-sm resize-none">${d.notes||''}</textarea></div><div class="flex gap-3"><button onclick="UI.closeModal()" class="flex-1 py-3.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-xl font-bold text-sm">キャンセル</button><button data-action="save-site" data-index="${safeIdx}" class="flex-1 py-3.5 bg-blue-600 text-white rounded-xl font-bold shadow-lg shadow-blue-500/20 text-sm">保存</button></div>`);
+        setupDropdown('workDetail', d.workDetail, 'wd');
+        const zIn=document.getElementById('zip-in'), aIn=document.getElementById('addr-in'), nIn=document.getElementById('s-note-in');
+        aIn.addEventListener('blur',()=>{if(aIn.value&&STATE.googleApiKey)new google.maps.Geocoder().geocode({address:aIn.value},(r,s)=>{if(s==='OK'){const p=Utils.parseAddress(r[0].formatted_address.replace('日本、',''));zIn.value=p.postal;aIn.value=p.addr;}});});
+        if(isNew&&STATE.googleApiKey){navigator.geolocation.getCurrentPosition(async pos=>{const lat=pos.coords.latitude,lng=pos.coords.longitude;const mDiv=document.getElementById('map-area');if(mDiv){mDiv.innerHTML='';const map=new google.maps.Map(mDiv,{center:{lat,lng},zoom:17,disableDefaultUI:true});const marker=new google.maps.Marker({position:{lat,lng},map,draggable:true});const updateLoc=async(lt,lg)=>{try{const r=await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lt},${lg}&key=${STATE.googleApiKey}&language=ja`);const d=await r.json();if(d.status==='OK'&&d.results[0]){const full=d.results[0].formatted_address.replace('日本、','').trim();const p=Utils.parseAddress(full);zIn.value=p.postal;aIn.value=p.addr;const poi=d.results.find(res=>res.types.includes('point_of_interest')||res.types.includes('establishment'));if(poi&&nIn.value===''){const pn=poi.formatted_address.replace('日本、','').trim();if(pn!==p.addr&&pn.length>p.addr.length)nIn.value=pn;}}}catch{}};updateLoc(lat,lng);marker.addListener('dragend',e=>updateLoc(e.latLng.lat(),e.latLng.lng()));}},()=>document.getElementById('map-area').innerHTML='<span class="text-red-400">位置情報エラー</span>',{enableHighAccuracy:true});}else if(isNew){document.getElementById('map-area').innerHTML='<span class="text-amber-500">APIキー未設定</span>';}
+    }
+
+    function setupDropdown(cat, val, idPrefix) { const con = document.getElementById((idPrefix||cat)+'-con'); const hidden = document.getElementById((idPrefix||cat)+'-val'); function render(pId, depth, path) { const kids = STATE.labelTrees[cat].filter(n => n.parentId === pId); if (depth > 0 && kids.length === 0 && depth > path.length) return; const sel = document.createElement('select'); sel.className = 'modern-input w-full p-2.5 mb-2 text-sm bg-[right_0.8rem_center] h-[42px]'; sel.innerHTML = `<option value="">${depth===0?'選択してください':'詳細を選択'}</option>`; kids.forEach(k => sel.innerHTML += `<option value="${k.id}">${k.name}</option>`); sel.innerHTML += `<option value="other">その他</option>`; con.appendChild(sel); if (depth < path.length) { const f = kids.find(k => k.name === path[depth]); if(f) { sel.value = f.id; render(f.id, depth+1, path); } else { sel.value='other'; const inp=document.createElement('input'); inp.className='modern-input w-full p-2.5 mt-1 text-sm'; inp.value=path.slice(depth).join(' / '); inp.oninput=update; con.appendChild(inp); } } sel.onchange = () => { while(sel.nextSibling) con.removeChild(sel.nextSibling); if(sel.value==='other'){const inp=document.createElement('input');inp.className='modern-input w-full p-2.5 mt-1 text-sm';inp.placeholder='内容を入力';inp.focus();inp.oninput=update;con.appendChild(inp);}else if(sel.value){render(parseInt(sel.value),depth+1,[]);} update(); } } function update() { const p=[]; con.querySelectorAll('select').forEach(s=>{if(s.value&&s.value!=='other')p.push(s.options[s.selectedIndex].text);}); const inp=con.querySelector('input'); if(inp&&inp.value.trim())p.push(inp.value.trim()); hidden.value=p.join(' / '); } con.innerHTML=''; render(null,0,val?val.split(' / '):[]); hidden.value=val||''; }
     </script>
 </body>
 </html>
