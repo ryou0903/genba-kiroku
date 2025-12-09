@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#1f2937" media="(prefers-color-scheme: dark)">
+    <meta name="description" content="交通誘導員のための現場記録アプリ">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="現場記録">
+    
+    <title>現場記録アプリ v1.2.0 (PWA)</title>
+    
+    <!-- PWA Manifest Placeholder (Filled by JS) -->
+    <link rel="manifest" id="dynamic-manifest">
+    <link rel="apple-touch-icon" id="dynamic-apple-icon">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+    
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        html, body { height: 100%; overflow: hidden; }
+        body { font-family: 'Inter', 'Noto Sans JP', sans-serif; -webkit-tap-highlight-color: transparent; display: flex; flex-direction: column; }
+        .main-content { flex-grow: 1; overflow-y: auto; padding-bottom: 80px; } /* Added padding for FAB */
+        .modal-backdrop, .sidemenu-backdrop { background-color: rgba(0,0,0,0.5); transition: opacity 0.3s ease; }
+        .modal-content, #side-menu { transition: transform 0.3s ease; }
+        .label-tree-item { border-left: 2px solid #e5e7eb; }
+        #toast { visibility: hidden; min-width: 250px; margin-left: -125px; background-color: #333; color: #fff; text-align: center; border-radius: 8px; padding: 16px; position: fixed; z-index: 100; left: 50%; bottom: 30px; opacity: 0; transition: all 0.5s; }
+        #toast.show { visibility: visible; opacity: 1; }
+
+        /* --- Base & Light Mode --- */
+        body { background-color: #f3f4f6; color: #1f2937; }
+        .card { background-color: white; }
+        .header { background-color: white; border-bottom: 1px solid #e5e7eb; }
+        input, textarea, select {
+            background-color: #ffffff;
+            border: 1px solid #d1d5db;
+            color: #111827;
+        }
+        
+        /* --- Dark Mode Overrides --- */
+        .dark { --bg-color: #111827; --text-color: #f9fafb; --card-bg: #1f2937; --border-color: #374151; --subtle-text: #9ca3af; --input-bg: #374151; }
+        .dark body { background-color: var(--bg-color); color: var(--text-color); }
+        .dark .card { background-color: var(--card-bg); }
+        .dark .header { background-color: var(--card-bg); border-bottom: 1px solid var(--border-color); }
+        .dark .text-gray-500 { color: var(--subtle-text); }
+        .dark .text-gray-700 { color: #d1d5db; }
+        .dark .text-gray-800 { color: #f9fafb; }
+        .dark .bg-gray-50 { background-color: #374151; }
+        .dark .bg-gray-100 { background-color: #374151; }
+        .dark .bg-gray-200 { background-color: #4b5563; }
+        .dark input, .dark textarea, .dark select { background-color: var(--input-bg); border-color: var(--border-color); color: var(--text-color); }
+
+        /* Accordion */
+        .accordion-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; }
+        
+        /* Calendar Styles */
+        .calendar-day { position: relative; }
+        .calendar-day.has-record::after { content: ''; position: absolute; bottom: 6px; left: 50%; transform: translateX(-50%); width: 6px; height: 6px; background-color: #3b82f6; border-radius: 50%; }
+        .calendar-day.is-today { font-weight: bold; border: 1px solid #9ca3af; }
+        .calendar-day.is-selected { background-color: #3b82f6; color: white; }
+    </style>
+</head>
+<body class="">
+
+    <!-- Side Menu -->
+    <div id="sidemenu-backdrop" class="sidemenu-backdrop fixed inset-0 z-40 hidden"></div>
+    <div id="side-menu" class="fixed top-0 left-0 h-full w-72 card shadow-lg z-50 transform -translate-x-full overflow-y-auto">
+        <div class="p-4">
+            <h2 class="text-2xl font-bold mb-6">メニュー</h2>
+            <nav class="space-y-1">
+                <div>
+                    <button data-action="toggle-accordion" data-target="accordion-data" class="w-full flex items-center justify-between p-2 rounded-md hover:bg-gray-100 active:bg-gray-200 dark:hover:bg-gray-700 dark:active:bg-gray-600">
+                        <span class="font-semibold"><i class="fas fa-database w-6 mr-2"></i>データ管理</span>
+                        <i class="fas fa-chevron-down transform transition-transform"></i>
+                    </button>
+                    <div id="accordion-data" class="accordion-content pl-4 pt-1">
+                        <a href="#" data-action="backup" class="flex items-center p-2 rounded-md hover:bg-gray-100 active:bg-gray-200 dark:hover:bg-gray-700 dark:active:bg-gray-600"><i class="fas fa-download w-6 mr-2"></i>全データバックアップ</a>
+                        <a href="#" data-action="restore" class="flex items-center p-2 rounded-md hover:bg-gray-100 active:bg-gray-200 dark:hover:bg-gray-700 dark:active:bg-gray-600"><i class="fas fa-upload w-6 mr-2"></i>データ復元</a>
+                    </div>
+                </div>
+                <div>
+                    <button data-action="toggle-accordion" data-target="accordion-settings" class="w-full flex items-center justify-between p-2 rounded-md hover:bg-gray-100 active:bg-gray-200 dark:hover:bg-gray-700 dark:active:bg-gray-600">
+                        <span class="font-semibold"><i class="fas fa-cogs w-6 mr-2"></i>設定</span>
+                        <i class="fas fa-chevron-down transform transition-transform"></i>
+                    </button>
+                    <div id="accordion-settings" class="accordion-content pl-4 pt-1">
+                        <a href="#" data-action="settings" class="flex items-center p-2 rounded-md hover:bg-gray-100 active:bg-gray-200 dark:hover:bg-gray-700 dark:active:bg-gray-600"><i class="fas fa-tags w-6 mr-2"></i>カスタムラベル管理</a>
+                        <a href="#" data-action="manage-api-key" class="flex items-center p-2 rounded-md hover:bg-gray-100 active:bg-gray-200 dark:hover:bg-gray-700 dark:active:bg-gray-600"><i class="fas fa-key w-6 mr-2"></i>APIキー設定</a>
+                        <!-- PWA Settings Link -->
+                        <a href="#" data-action="show-pwa-settings" class="flex items-center p-2 rounded-md hover:bg-gray-100 active:bg-gray-200 dark:hover:bg-gray-700 dark:active:bg-gray-600 text-blue-600 dark:text-blue-400"><i class="fas fa-mobile-alt w-6 mr-2"></i>PWA設定 (アプリ化)</a>
+                        
+                        <div class="flex items-center justify-between p-2">
+                            <div class="flex items-center"><i class="fas fa-moon w-6 mr-2"></i><span>ダークモード</span></div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="dark-mode-toggle" class="sr-only peer">
+                                <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <button data-action="toggle-accordion" data-target="accordion-info" class="w-full flex items-center justify-between p-2 rounded-md hover:bg-gray-100 active:bg-gray-200 dark:hover:bg-gray-700 dark:active:bg-gray-600">
+                        <span class="font-semibold"><i class="fas fa-info-circle w-6 mr-2"></i>情報</span>
+                        <i class="fas fa-chevron-down transform transition-transform"></i>
+                    </button>
+                    <div id="accordion-info" class="accordion-content pl-4 pt-1">
+                        <a href="#" data-action="show-history" class="flex items-center p-2 rounded-md hover:bg-gray-100 active:bg-gray-200 dark:hover:bg-gray-700 dark:active:bg-gray-600"><i class="fas fa-history w-6 mr-2"></i>更新履歴</a>
+                        <a href="#" data-action="show-about" class="flex items-center p-2 rounded-md hover:bg-gray-100 active:bg-gray-200 dark:hover:bg-gray-700 dark:active:bg-gray-600"><i class="fas fa-book w-6 mr-2"></i>このアプリについて</a>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="header shadow-md sticky top-0 z-30 w-full safe-area-top">
+        <div class="max-w-4xl mx-auto px-2 sm:px-4 py-3 flex justify-between items-center">
+            <button data-action="toggle-menu" class="p-3 rounded-full hover:bg-gray-100 active:bg-gray-200 dark:hover:bg-gray-700 dark:active:bg-gray-600 transition-colors">
+                <i class="fas fa-lg fa-bars"></i>
+            </button>
+            <div class="flex items-center justify-center flex-grow space-x-2">
+                <button data-action="prev-day" class="p-3 rounded-full hover:bg-gray-100 active:bg-gray-200 dark:hover:bg-gray-700 dark:active:bg-gray-600 transition-colors">
+                    <i class="fas fa-lg fa-chevron-left"></i>
+                </button>
+                <button data-action="show-calendar" id="current-date-display" class="text-lg sm:text-xl font-bold px-4 sm:px-6 py-3 rounded-xl shadow-md bg-white hover:bg-gray-50 active:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 dark:active:bg-gray-600 transition-all"></button>
+                <button data-action="next-day" class="p-3 rounded-full hover:bg-gray-100 active:bg-gray-200 dark:hover:bg-gray-700 dark:active:bg-gray-600 transition-colors">
+                    <i class="fas fa-lg fa-chevron-right"></i>
+                </button>
+            </div>
+            <div class="w-10"></div> <!-- Spacer -->
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content p-4">
+        <div class="max-w-4xl mx-auto space-y-6">
+            <section id="daily-info-section" class="card p-5 rounded-2xl shadow">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-xl font-bold">本日の業務情報</h2>
+                    <button data-action="edit-daily-info" class="text-blue-600 hover:text-blue-800"><i class="fas fa-pen-to-square"></i> 編集</button>
+                </div>
+                <div id="daily-info-display" class="mt-4 space-y-2"></div>
+            </section>
+            <section>
+                <h2 class="text-xl font-bold mb-3">現場ごとの記録</h2>
+                <div id="sites-list" class="space-y-3"></div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Add Site Button -->
+    <button data-action="add-site" class="fixed bottom-6 right-6 bg-blue-600 hover:bg-blue-700 text-white w-16 h-16 rounded-full shadow-lg flex items-center justify-center text-3xl z-20">
+        <i class="fas fa-plus"></i>
+    </button>
+
+    <!-- Main Modal -->
+    <div id="modal-backdrop" class="modal-backdrop fixed inset-0 z-40 hidden">
+        <div id="modal-content" class="absolute bottom-0 left-0 right-0 card p-5 shadow-lg max-h-[90vh] overflow-y-auto transform translate-y-full rounded-t-2xl">
+        </div>
+    </div>
+    
+    <!-- Confirmation/Prompt Modal -->
+    <div id="dialog-modal-backdrop" class="modal-backdrop fixed inset-0 z-60 hidden">
+        <div class="flex items-center justify-center h-full p-4">
+            <div id="dialog-modal-content" class="card p-6 rounded-2xl shadow-lg w-full max-w-sm">
+                <!-- Dialog content is injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast & File Input -->
+    <div id="toast"></div>
+    <input type="file" id="restore-input" class="hidden" accept=".json">
+
+    <script>
+    // App State
+    let googleApiKey = '';
+    let currentDate = new Date();
+    let calendarDate = new Date();
+    let allData = {};
+    let labelTrees = { company: [], jobType: [], teamName: [], workDetail: [] };
+    let nextLabelId = 1;
+    let isMapApiLoaded = false;
+    
+    // DOM Elements
+    const allElements = {
+        body: document.body,
+        sideMenu: document.getElementById('side-menu'),
+        sidemenuBackdrop: document.getElementById('sidemenu-backdrop'),
+        darkModeToggle: document.getElementById('dark-mode-toggle'),
+        currentDateDisplay: document.getElementById('current-date-display'),
+        dailyInfoDisplay: document.getElementById('daily-info-display'),
+        sitesList: document.getElementById('sites-list'),
+        modalBackdrop: document.getElementById('modal-backdrop'),
+        modalContent: document.getElementById('modal-content'),
+        dialogModalBackdrop: document.getElementById('dialog-modal-backdrop'),
+        dialogModalContent: document.getElementById('dialog-modal-content'),
+        toast: document.getElementById('toast'),
+        restoreInput: document.getElementById('restore-input')
+    };
+
+
+    // --- Theme Management ---
+    function applyTheme(theme) {
+        if (theme === 'dark') {
+            document.documentElement.classList.add('dark');
+            document.querySelector('meta[name="theme-color"][media="(prefers-color-scheme: dark)"]').setAttribute('content', '#1f2937');
+            document.querySelector('meta[name="theme-color"][media="(prefers-color-scheme: light)"]').setAttribute('content', '#1f2937');
+        } else {
+            document.documentElement.classList.remove('dark');
+            document.querySelector('meta[name="theme-color"][media="(prefers-color-scheme: dark)"]').setAttribute('content', '#1f2937');
+            document.querySelector('meta[name="theme-color"][media="(prefers-color-scheme: light)"]').setAttribute('content', '#ffffff');
+        }
+        allElements.darkModeToggle.checked = (theme === 'dark');
+        
+        // Update manifest color dynamically if needed (Optional)
+    }
+    function toggleTheme() {
+        const newTheme = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
+        localStorage.setItem('theme', newTheme);
+        applyTheme(newTheme);
+    }
+
+    // --- Side Menu ---
+    function openSideMenu() {
+        allElements.sidemenuBackdrop.classList.remove('hidden');
+        setTimeout(() => {
+            allElements.sidemenuBackdrop.style.opacity = '1';
+            allElements.sideMenu.style.transform = 'translateX(0)';
+        }, 10);
+    }
+    function closeSideMenu() {
+        allElements.sidemenuBackdrop.style.opacity = '0';
+        allElements.sideMenu.style.transform = 'translateX(-100%)';
+        setTimeout(() => {
+            allElements.sidemenuBackdrop.classList.add('hidden');
+        }, 300);
+    }
+
+    // --- Data Management ---
+    function saveApiKey(key) {
+        googleApiKey = key;
+        localStorage.setItem('trafficGuardApiKey', key);
+    }
+    function loadApiKey() {
+        googleApiKey = localStorage.getItem('trafficGuardApiKey') || '';
+    }
+    function saveData() { localStorage.setItem('trafficGuardData', JSON.stringify(allData)); }
+    function loadData() {
+        const loadedData = localStorage.getItem('trafficGuardData');
+        if (loadedData) allData = JSON.parse(loadedData);
+    }
+    function saveLabelTrees() { localStorage.setItem('trafficGuardLabelTrees', JSON.stringify(labelTrees)); }
+    function calculateNextLabelId() {
+        let maxId = 0;
+        Object.values(labelTrees).forEach(tree => {
+            if (!Array.isArray(tree)) return;
+            tree.forEach(node => { if (node.id > maxId) maxId = node.id; });
+        });
+        nextLabelId = maxId + 1;
+    }
+    function loadLabelTrees() {
+        const storedTrees = localStorage.getItem('trafficGuardLabelTrees');
+        if (storedTrees) {
+            labelTrees = JSON.parse(storedTrees);
+            calculateNextLabelId();
+        }
+    }
+    function formatDate(date) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`; }
+    function getTodayData() {
+        const dateKey = formatDate(currentDate);
+        if (!allData[dateKey]) {
+            allData[dateKey] = {
+                dailyInfo: { company: '', jobType: '', teamName: '', projectName: '', notes: '' },
+                sites: []
+            };
+        }
+        return allData[dateKey];
+    }
+    
+    // --- UI Rendering ---
+    function renderPage() {
+        const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' };
+        allElements.currentDateDisplay.textContent = currentDate.toLocaleDateString('ja-JP', options);
+        const todayData = getTodayData();
+        const di = todayData.dailyInfo;
+        allElements.dailyInfoDisplay.innerHTML = `
+            <p><strong>会社名:</strong> ${di.company || '未設定'}</p>
+            <p><strong>仕事の種類:</strong> ${di.jobType || '未設定'}</p>
+            <p><strong>班名:</strong> ${di.teamName || '未設定'}</p>
+            <p><strong>工事名:</strong> ${di.projectName || '未設定'}</p>
+            <p><strong>備考:</strong> ${di.notes || '未設定'}</p>
+        `;
+        allElements.sitesList.innerHTML = '';
+        if (todayData.sites.length === 0) {
+            allElements.sitesList.innerHTML = '<p class="text-gray-500 text-center">まだ現場の記録がありません。</p>';
+        } else {
+            todayData.sites.forEach((site, index) => {
+                const siteEl = document.createElement('div');
+                siteEl.className = 'card p-4 rounded-lg shadow-sm';
+                const addressDisplay = site.address ? `<a href="${site.mapLink}" target="_blank" class="text-blue-500 hover:underline text-sm"><i class="fas fa-map-marker-alt"></i> ${site.address}</a>` : '<span class="text-sm text-gray-400">位置情報なし</span>';
+                siteEl.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="font-bold text-lg text-blue-800 dark:text-blue-300">${site.time} - ${site.workDetail}</p>
+                            <p class="text-gray-600 dark:text-gray-400 my-1">${site.notes || 'メモなし'}</p>
+                            ${addressDisplay}
+                        </div>
+                        <button data-action="edit-site" data-index="${index}" class="text-gray-400 hover:text-blue-600 p-2"><i class="fas fa-pen"></i></button>
+                    </div>
+                `;
+                allElements.sitesList.appendChild(siteEl);
+            });
+        }
+    }
+
+    // --- Modal Logic ---
+    function openModal(content) {
+        allElements.modalContent.innerHTML = content;
+        allElements.modalBackdrop.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+        setTimeout(() => {
+            allElements.modalBackdrop.style.opacity = '1';
+            allElements.modalContent.style.transform = 'translateY(0)';
+        }, 10);
+    }
+
+    function closeModal() {
+        allElements.modalBackdrop.style.opacity = '0';
+        allElements.modalContent.style.transform = 'translateY(100%)';
+        setTimeout(() => {
+            allElements.modalBackdrop.classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }, 300);
+    }
+    
+    // --- Dialog Modals (Confirm & Prompt) ---
+    function openConfirmModal(message, onConfirm) {
+        allElements.dialogModalContent.innerHTML = `
+            <p class="mb-6 text-lg text-center font-bold">${message}</p>
+            <div class="flex gap-3 justify-center">
+                <button id="dialog-yes-btn" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg shadow-md">はい</button>
+                <button id="dialog-no-btn" class="flex-1 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 text-gray-800 dark:text-gray-100 font-bold py-3 rounded-lg shadow-md">キャンセル</button>
+            </div>
+        `;
+        allElements.dialogModalBackdrop.classList.remove('hidden');
+        document.getElementById('dialog-yes-btn').onclick = () => {
+            onConfirm();
+            closeDialogModal();
+        };
+        document.getElementById('dialog-no-btn').onclick = closeDialogModal;
+    }
+
+    function openPromptModal(message, defaultValue, onConfirm, placeholder = '') {
+        allElements.dialogModalContent.innerHTML = `
+            <p class="mb-4 text-lg text-center font-bold">${message}</p>
+            <input id="dialog-input" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" class="w-full p-3 border rounded-lg mb-6 bg-gray-50 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500" value="${defaultValue}" placeholder="${placeholder}">
+            <div class="flex gap-3 justify-center">
+                <button id="dialog-ok-btn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-md">OK</button>
+                <button id="dialog-cancel-btn" class="flex-1 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 text-gray-800 dark:text-gray-100 font-bold py-3 rounded-lg shadow-md">キャンセル</button>
+            </div>
+        `;
+        allElements.dialogModalBackdrop.classList.remove('hidden');
+        const input = document.getElementById('dialog-input');
+        input.focus();
+        input.select();
+
+        const confirmAction = () => {
+            const value = input.value;
+            if (value && value.trim()) {
+                onConfirm(value.trim());
+                closeDialogModal();
+            } else {
+                input.classList.add('border-red-500');
+                setTimeout(() => input.classList.remove('border-red-500'), 1000);
+            }
+        };
+
+        document.getElementById('dialog-ok-btn').onclick = confirmAction;
+        input.onkeydown = (e) => { if (e.key === 'Enter') confirmAction(); };
+        document.getElementById('dialog-cancel-btn').onclick = closeDialogModal;
+    }
+
+    function closeDialogModal() {
+        allElements.dialogModalBackdrop.classList.add('hidden');
+    }
+
+    // --- Address & Map ---
+    function parseAddress(fullAddress) {
+        const postalCodeRegex = /〒(\d{3}-\d{4})/;
+        const match = fullAddress.match(postalCodeRegex);
+        if (match) {
+            const postalCode = match[1];
+            const address = fullAddress.replace(postalCodeRegex, '').trim();
+            return { postalCode, address };
+        }
+        return { postalCode: '', address: fullAddress };
+    }
+
+    async function getLocationData(lat, lon) {
+        const defaultResponse = { fullAddress: "住所の取得に失敗", mapLink: `https://www.google.com/maps/search/?api=1&query=${lat},${lon}` };
+        if (!googleApiKey) {
+            return { ...defaultResponse, fullAddress: "APIキーが設定されていません" };
+        }
+        const apiUrl = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lon}&key=${googleApiKey}&language=ja`;
+        try {
+            const response = await fetch(apiUrl);
+            if (!response.ok) throw new Error(`API request failed`);
+            const data = await response.json();
+            if (data.status === 'OK' && data.results[0]) {
+                const fullAddress = data.results[0].formatted_address.replace('日本、', '').trim();
+                return { fullAddress, mapLink: defaultResponse.mapLink };
+            } else {
+                return { ...defaultResponse, fullAddress: `住所取得エラー: ${data.status}` };
+            }
+        } catch (error) {
+            return defaultResponse;
+        }
+    }
+    
+    // --- Calendar Modal ---
+    function showCalendarModal() {
+        const year = calendarDate.getFullYear();
+        const month = calendarDate.getMonth();
+        const monthName = `${year}年 ${month + 1}月`;
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        let calendarHtml = `
+            <div class="flex justify-between items-center mb-4">
+                <button data-action="prev-year" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"><i class="fas fa-angle-double-left"></i></button>
+                <button data-action="prev-month" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"><i class="fas fa-chevron-left"></i></button>
+                <h4 class="text-lg font-bold">${monthName}</h4>
+                <button data-action="next-month" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"><i class="fas fa-chevron-right"></i></button>
+                <button data-action="next-year" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"><i class="fas fa-angle-double-right"></i></button>
+            </div>
+            <div class="grid grid-cols-7 gap-1 text-center text-sm font-bold">
+                <div class="text-red-500">日</div><div>月</div><div>火</div><div>水</div><div>木</div><div>金</div><div class="text-blue-500">土</div>`;
+        
+        for (let i = 0; i < firstDay; i++) { calendarHtml += `<div></div>`; }
+
+        const today = new Date();
+        const todayStr = formatDate(today);
+
+        for (let day = 1; day <= daysInMonth; day++) {
+            const loopDate = new Date(year, month, day);
+            const loopDateStr = formatDate(loopDate);
+            let classes = 'calendar-day p-3 rounded-full cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center';
+            if (allData[loopDateStr] && (allData[loopDateStr].sites.length > 0 || allData[loopDateStr].dailyInfo.company)) {
+                classes += ' has-record';
+            }
+            if (loopDateStr === todayStr) { classes += ' is-today'; }
+            if (loopDateStr === formatDate(currentDate)) { classes += ' is-selected'; }
+            calendarHtml += `<div data-action="select-date" data-date="${loopDateStr}" class="${classes}">${day}</div>`;
+        }
+
+        calendarHtml += `</div>
+            <button data-action="go-to-today" class="w-full bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 text-gray-800 dark:text-gray-100 font-bold py-3 rounded-lg mt-4 shadow-sm">今日に戻る</button>`;
+        
+        openModal(calendarHtml);
+    }
+
+    // --- Custom Label Management & Hierarchical Dropdowns ---
+    function showLabelManagementModal(initialCategory = 'company') {
+        const content = `
+            <h3 class="text-lg font-bold mb-4">カスタムラベル管理</h3>
+            <div class="mb-4">
+                <label for="category-select" class="block text-sm font-medium">編集する項目:</label>
+                <select id="category-select" class="w-full p-2 border rounded mt-1">
+                    <option value="company">会社名</option>
+                    <option value="jobType">仕事の種類</option>
+                    <option value="teamName">班名</option>
+                    <option value="workDetail">作業内容</option>
+                </select>
+            </div>
+            <div id="label-tree-container" class="space-y-2 max-h-60 overflow-y-auto border p-2 rounded"></div>
+            <div class="mt-4">
+                <button data-action="add-root-label" class="w-full bg-blue-500 text-white py-2 rounded">新しい親ラベルを追加</button>
+            </div>
+            <button data-action="close-modal" class="w-full bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 text-gray-800 dark:text-gray-100 font-bold py-2 rounded mt-4">閉じる</button>
+        `;
+        openModal(content);
+        const categorySelect = document.getElementById('category-select');
+        const container = document.getElementById('label-tree-container');
+        
+        categorySelect.value = initialCategory;
+
+        function renderTree() {
+            const category = categorySelect.value;
+            if (!labelTrees[category]) labelTrees[category] = [];
+            container.innerHTML = '';
+            const roots = labelTrees[category].filter(node => node.parentId === null);
+            if (roots.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-center">ラベルがありません。</p>';
+            } else {
+                roots.forEach(root => renderNode(root, container, 0, category));
+            }
+        }
+        function renderNode(node, parentEl, depth, category) {
+            const nodeEl = document.createElement('div');
+            nodeEl.className = 'label-tree-item p-2 rounded bg-white dark:bg-gray-800 shadow-sm mb-1';
+            nodeEl.style.marginLeft = `${depth * 20}px`;
+            nodeEl.innerHTML = `
+                <div class="flex justify-between items-center">
+                    <span class="truncate font-medium">${node.name}</span>
+                    <div class="space-x-3 flex-shrink-0">
+                        <button data-action="add-child-label" data-id="${node.id}" class="text-green-500"><i class="fas fa-plus-circle"></i></button>
+                        <button data-action="edit-label" data-id="${node.id}" class="text-yellow-500"><i class="fas fa-pen"></i></button>
+                        <button data-action="delete-label" data-id="${node.id}" class="text-red-500"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+            `;
+            parentEl.appendChild(nodeEl);
+            const children = labelTrees[category].filter(child => child.parentId === node.id);
+            children.forEach(child => renderNode(child, parentEl, depth + 1, category));
+        }
+        categorySelect.addEventListener('change', renderTree);
+        renderTree();
+    }
+
+    function createHierarchicalDropdowns(container, category, finalValueInput, initialValue = '') {
+        container.innerHTML = '';
+        const initialPath = initialValue ? initialValue.split(' / ') : [];
+        let currentPath = [];
+
+        function updateFinalValue() {
+            const lastElement = container.lastChild;
+            if (lastElement && lastElement.tagName === 'INPUT') {
+                const finalPath = [...currentPath];
+                if (lastElement.value.trim()) {
+                    finalPath.push(lastElement.value.trim());
+                }
+                finalValueInput.value = finalPath.join(' / ');
+            } else {
+                finalValueInput.value = currentPath.join(' / ');
+            }
+        }
+
+        function createDropdown(parentId, depth) {
+            const children = labelTrees[category] ? labelTrees[category].filter(node => node.parentId === parentId) : [];
+            if (depth > 0 && children.length === 0 && depth > initialPath.length) return;
+
+            const select = document.createElement('select');
+            select.className = 'w-full p-2 border rounded mb-2 bg-gray-50 dark:bg-gray-700';
+            select.innerHTML = `<option value="">-- ${depth + 1}階層目を選択 --</option>`;
+            children.forEach(child => {
+                select.innerHTML += `<option value="${child.id}">${child.name}</option>`;
+            });
+            select.innerHTML += `<option value="other">その他 (自由入力)</option>`;
+            container.appendChild(select);
+
+            select.addEventListener('change', () => {
+                while (select.nextSibling) container.removeChild(select.nextSibling);
+                const selectedId = select.value;
+                currentPath = currentPath.slice(0, depth);
+                if (selectedId === "other") {
+                    const otherInput = document.createElement('input');
+                    otherInput.type = 'text';
+                    otherInput.autocomplete = 'off';
+                    otherInput.autocorrect = 'off';
+                    otherInput.autocapitalize = 'off';
+                    otherInput.placeholder = '新しい内容を入力';
+                    otherInput.className = 'w-full p-2 border rounded mt-2';
+                    otherInput.addEventListener('input', updateFinalValue);
+                    container.appendChild(otherInput);
+                    otherInput.focus();
+                } else if (selectedId) {
+                    const selectedNode = children.find(c => c.id == selectedId);
+                    currentPath.push(selectedNode.name);
+                    createDropdown(parseInt(selectedId), depth + 1);
+                }
+                updateFinalValue();
+            });
+
+            if (depth < initialPath.length) {
+                const nodeToFind = children.find(c => c.name === initialPath[depth]);
+                if (nodeToFind) {
+                    select.value = nodeToFind.id;
+                    currentPath.push(nodeToFind.name);
+                    createDropdown(nodeToFind.id, depth + 1);
+                } else {
+                    select.value = 'other';
+                    const otherInput = document.createElement('input');
+                    otherInput.type = 'text';
+                    otherInput.autocomplete = 'off';
+                    otherInput.autocorrect = 'off';
+                    otherInput.autocapitalize = 'off';
+                    otherInput.placeholder = '新しい内容を入力';
+                    otherInput.className = 'w-full p-2 border rounded mt-2';
+                    otherInput.addEventListener('input', updateFinalValue);
+                    otherInput.value = initialPath.slice(depth).join(' / ');
+                    container.appendChild(otherInput);
+                }
+            }
+        }
+        createDropdown(null, 0);
+        finalValueInput.value = initialValue;
+    }
+    
+    // --- Main Modals ---
+    function showDailyInfoModal() {
+        const di = getTodayData().dailyInfo;
+        const content = `
+            <h3 class="text-lg font-bold mb-4">業務情報の編集</h3>
+            <div class="space-y-4">
+                <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300">会社名</label><div id="company-dropdown-container"></div><input type="hidden" id="company-final-value"></div>
+                <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300">仕事の種類</label><div id="jobType-dropdown-container"></div><input type="hidden" id="jobType-final-value"></div>
+                <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300">班名</label><div id="teamName-dropdown-container"></div><input type="hidden" id="teamName-final-value"></div>
+                <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300">工事名</label><input id="project-name-input" class="w-full p-2 border rounded" autocomplete="off" autocorrect="off" autocapitalize="off" value="${di.projectName || ''}"></div>
+                <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300">備考</label><textarea id="daily-notes-input" class="w-full p-2 border rounded" rows="3" autocomplete="off" autocorrect="off" autocapitalize="off">${di.notes || ''}</textarea></div>
+                <div class="flex gap-3 pt-2">
+                    <button data-action="save-daily-info" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow">保存</button>
+                    <button data-action="close-modal" class="flex-1 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 text-gray-800 dark:text-gray-100 font-bold py-3 rounded-lg shadow">キャンセル</button>
+                </div>
+            </div>`;
+        openModal(content);
+        createHierarchicalDropdowns(document.getElementById('company-dropdown-container'), 'company', document.getElementById('company-final-value'), di.company);
+        createHierarchicalDropdowns(document.getElementById('jobType-dropdown-container'), 'jobType', document.getElementById('jobType-final-value'), di.jobType);
+        createHierarchicalDropdowns(document.getElementById('teamName-dropdown-container'), 'teamName', document.getElementById('teamName-final-value'), di.teamName);
+    }
+
+    async function showSiteModal(siteData = null, index = null) {
+        const isNew = siteData === null;
+        const data = isNew ? { time: new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }), workDetail: '', notes: '', mapLink: '', address: '' } : siteData;
+        const { postalCode, address } = parseAddress(data.address);
+
+        const mapHtml = isNew ? `
+            <div id="map-container" class="w-full h-48 bg-gray-200 dark:bg-gray-700 rounded-md flex items-center justify-center text-gray-500 mb-2">
+                ${googleApiKey ? '<i class="fas fa-spinner fa-spin mr-2"></i>地図を読み込み中...' : '<i class="fas fa-exclamation-triangle mr-2"></i>APIキー未設定'}
+            </div>` : '';
+
+        const content = `
+            <h3 class="text-lg font-bold mb-4">${isNew ? '現場の追加' : '現場の編集'}</h3>
+            <div id="site-modal-form" class="space-y-4">
+                ${mapHtml}
+                <div class="grid grid-cols-3 gap-2">
+                    <div class="col-span-1">
+                        <label class="block text-xs font-medium text-gray-500">郵便番号</label>
+                        <input id="postal-code-input" type="text" class="w-full p-2 border rounded text-sm" value="${postalCode}" placeholder="000-0000" autocomplete="off" autocorrect="off" autocapitalize="off">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-xs font-medium text-gray-500">住所</label>
+                        <input id="address-input" type="text" class="w-full p-2 border rounded text-sm" value="${address}" placeholder="住所を入力" autocomplete="off" autocorrect="off" autocapitalize="off">
+                    </div>
+                </div>
+                <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300">時間</label><input id="time-input" type="time" class="w-full p-2 border rounded bg-gray-50 dark:bg-gray-700" value="${data.time}"></div>
+                <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300">作業内容</label><div id="workDetail-dropdown-container"></div><input type="hidden" id="workDetail-final-value"></div>
+                <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300">備考</label><textarea id="site-notes-input" class="w-full p-2 border rounded" rows="2" autocomplete="off" autocorrect="off" autocapitalize="off">${data.notes || ''}</textarea></div>
+                <div class="flex gap-3 pt-2">
+                    <button id="save-site-btn" data-action="save-site" data-index="${index}" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow">保存</button>
+                    ${!isNew ? `<button data-action="delete-site" data-index="${index}" class="bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-4 rounded-lg shadow"><i class="fas fa-trash"></i></button>` : ''}
+                    <button data-action="close-modal" class="flex-1 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 text-gray-800 dark:text-gray-100 font-bold py-3 rounded-lg shadow">キャンセル</button>
+                </div>
+            </div>`;
+        openModal(content);
+        createHierarchicalDropdowns(document.getElementById('workDetail-dropdown-container'), 'workDetail', document.getElementById('workDetail-final-value'), data.workDetail);
+        
+        if (!isMapApiLoaded && googleApiKey) {
+            showToast('地図機能の読み込みに時間がかかっています。', 'error');
+            return;
+        }
+
+        const postalCodeInput = document.getElementById('postal-code-input');
+        const addressInput = document.getElementById('address-input');
+        
+        addressInput.addEventListener('blur', () => {
+            const currentAddress = addressInput.value.trim();
+            if(currentAddress && googleApiKey) {
+                const geocoder = new google.maps.Geocoder();
+                geocoder.geocode({ address: currentAddress, region: 'JP' }, (results, status) => {
+                    if (status === 'OK') {
+                        const fullAddress = results[0].formatted_address.replace('日本、', '').trim();
+                        const { postalCode, address } = parseAddress(fullAddress);
+                        postalCodeInput.value = postalCode;
+                        addressInput.value = address;
+                    }
+                });
+            }
+        });
+
+        if (isNew) {
+            const initMap = (lat, lng) => {
+                const mapDiv = document.getElementById('map-container');
+                if (!mapDiv) return;
+                mapDiv.innerHTML = '';
+                const location = { lat, lng };
+                const map = new google.maps.Map(mapDiv, {
+                    zoom: 18,
+                    center: location,
+                    disableDefaultUI: true,
+                    zoomControl: true,
+                });
+                const marker = new google.maps.Marker({
+                    position: location,
+                    map: map,
+                    draggable: true,
+                });
+
+                marker.addListener('dragend', async (e) => {
+                    const newLat = e.latLng.lat();
+                    const newLng = e.latLng.lng();
+                    const locationData = await getLocationData(newLat, newLng);
+                    const { postalCode, address } = parseAddress(locationData.fullAddress);
+                    postalCodeInput.value = postalCode;
+                    addressInput.value = address;
+                });
+            };
+            
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    const { latitude, longitude } = position.coords;
+                    initMap(latitude, longitude);
+                    const locationData = await getLocationData(latitude, longitude);
+                    const { postalCode, address } = parseAddress(locationData.fullAddress);
+                    postalCodeInput.value = postalCode;
+                    addressInput.value = address;
+                },
+                () => initMap(35.681236, 139.767125),
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            );
+        }
+    }
+    
+    // --- About & History Modals ---
+    function showAboutModal() {
+        const content = `
+            <h3 class="text-lg font-bold mb-4">このアプリについて</h3>
+            <div class="space-y-2 text-sm">
+                <p><strong>アプリ名:</strong> 現場記録アプリ</p>
+                <p><strong>バージョン:</strong> 1.2.0 (PWA対応版)</p>
+                <p>交通誘導員の業務効率化のために設計されています。完全オフライン対応。</p>
+            </div>
+            <button data-action="close-modal" class="w-full bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 text-gray-800 dark:text-gray-100 font-bold py-2 rounded mt-4">閉じる</button>
+        `;
+        openModal(content);
+    }
+
+    function showUpdateHistoryModal() {
+        const history = [
+            { version: "v1.2.0", changes: ["PWA（Progressive Web App）機能を追加", "オフライン対応を強化", "ホーム画面アイコンの自動生成", "PWA設定キットのダウンロード機能を追加"] },
+            { version: "v1.1.0", changes: ["郵便番号の自動更新機能を追加", "API節約のため編集画面の地図を非表示化", "更新履歴機能を追加", "位置情報取得の精度と速度を最適化"] },
+            { version: "v1.0.9", changes: ["住所の手動編集時に郵便番号が更新されない不具合を修正", "地図の初期ズームレベルを拡大"] },
+        ];
+
+        let historyHtml = `<h3 class="text-lg font-bold mb-4">更新履歴</h3><div class="space-y-4 max-h-64 overflow-y-auto">`;
+        history.forEach(item => {
+            historyHtml += `<div><h4 class="font-bold">${item.version}</h4><ul class="list-disc list-inside text-sm text-gray-600 dark:text-gray-400">`;
+            item.changes.forEach(change => {
+                historyHtml += `<li>${change}</li>`;
+            });
+            historyHtml += `</ul></div>`;
+        });
+        historyHtml += `</div><button data-action="close-modal" class="w-full bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 text-gray-800 dark:text-gray-100 font-bold py-2 rounded mt-6">閉じる</button>`;
+        
+        openModal(historyHtml);
+    }
+    
+    // --- PWA Settings Modal ---
+    function showPWASettingsModal() {
+        const content = `
+            <h3 class="text-lg font-bold mb-4"><i class="fas fa-mobile-alt text-blue-500"></i> PWA設定 (アプリ化)</h3>
+            <div class="space-y-4 text-sm">
+                <p>このアプリを「ホーム画面に追加」することで、アプリのように使うことができます。</p>
+                
+                <div class="bg-blue-50 dark:bg-blue-900 p-3 rounded-lg">
+                    <h4 class="font-bold mb-1">簡易インストール</h4>
+                    <p class="text-xs mb-2">ブラウザのメニューから「ホーム画面に追加」を選択してください。</p>
+                </div>
+
+                <div class="border-t pt-2 mt-2">
+                    <h4 class="font-bold mb-2">完全オフライン対応 (推奨)</h4>
+                    <p class="text-xs mb-3">サーバーにアップロードして使用する場合、以下のファイルをダウンロードし、このHTMLファイルと同じ場所に配置してください。</p>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="pwaManager.downloadManifest()" class="bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 p-2 rounded text-xs font-bold"><i class="fas fa-file-code"></i> manifest.json</button>
+                        <button onclick="pwaManager.downloadServiceWorker()" class="bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 p-2 rounded text-xs font-bold"><i class="fas fa-cogs"></i> service-worker.js</button>
+                    </div>
+                </div>
+            </div>
+            <button data-action="close-modal" class="w-full bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 text-gray-800 dark:text-gray-100 font-bold py-2 rounded mt-4">閉じる</button>
+        `;
+        openModal(content);
+    }
+
+    // --- Toast Notification ---
+    function showToast(message, type = 'success') {
+        allElements.toast.textContent = message;
+        allElements.toast.className = `toast show ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`;
+        const duration = Math.max(3000, message.length * 100);
+        setTimeout(() => { allElements.toast.className = allElements.toast.className.replace("show", ""); }, duration);
+    }
+
+    // --- PWA Manager Class ---
+    const pwaManager = {
+        init: function() {
+            this.setupManifest();
+            // Try to register SW if it exists relative to this file
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('service-worker.js')
+                    .then(reg => console.log('SW Registered', reg))
+                    .catch(err => console.log('SW Registration failed (Expected if local/singlefile)', err));
+            }
+        },
+        
+        generateIcon: function(size) {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+
+            // Background
+            ctx.fillStyle = '#2563EB'; // Blue-600
+            ctx.fillRect(0, 0, size, size);
+
+            // Shield Shape (Simple representation) or just text
+            // Let's do a simple shield-like clip or just rounded rect
+            
+            // Text
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = `bold ${size * 0.4}px sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('TG', size / 2, size / 2);
+            
+            return canvas.toDataURL('image/png');
+        },
+
+        setupManifest: function() {
+            const icon192 = this.generateIcon(192);
+            const icon512 = this.generateIcon(512);
+            
+            // Set favicon/apple touch icon
+            document.getElementById('dynamic-apple-icon').href = icon192;
+
+            const manifest = {
+                name: "現場記録アプリ",
+                short_name: "現場記録",
+                start_url: ".",
+                display: "standalone",
+                background_color: "#f3f4f6",
+                theme_color: "#2563EB",
+                orientation: "portrait",
+                icons: [
+                    { src: icon192, sizes: "192x192", type: "image/png" },
+                    { src: icon512, sizes: "512x512", type: "image/png" }
+                ]
+            };
+            
+            const stringManifest = JSON.stringify(manifest);
+            const blob = new Blob([stringManifest], {type: 'application/json'});
+            const manifestURL = URL.createObjectURL(blob);
+            document.getElementById('dynamic-manifest').href = manifestURL;
+        },
+
+        downloadManifest: function() {
+            const icon192 = this.generateIcon(192);
+            const icon512 = this.generateIcon(512);
+            const manifest = {
+                name: "現場記録アプリ",
+                short_name: "現場記録",
+                start_url: "./index.html", // Assumes filename
+                display: "standalone",
+                background_color: "#f3f4f6",
+                theme_color: "#2563EB",
+                orientation: "portrait",
+                icons: [
+                    { src: "icon-192.png", sizes: "192x192", type: "image/png" },
+                    { src: "icon-512.png", sizes: "512x512", type: "image/png" }
+                ]
+            };
+            this.downloadFile('manifest.json', JSON.stringify(manifest, null, 2));
+            this.downloadFile('icon-192.png', icon192, true); // base64
+            this.downloadFile('icon-512.png', icon512, true); // base64
+            showToast('マニフェストとアイコンをダウンロードしました');
+        },
+
+        downloadServiceWorker: function() {
+            const swCode = `
+const CACHE_NAME = 'traffic-guard-v1';
+const ASSETS = [
+  './',
+  './index.html', // Make sure this matches your HTML filename
+  'https://cdn.tailwindcss.com',
+  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
+  'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap'
+];
+
+self.addEventListener('install', (e) => {
+  e.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
+  );
+});
+
+self.addEventListener('fetch', (e) => {
+  e.respondWith(
+    caches.match(e.request).then((response) => response || fetch(e.request))
+  );
+});
+`;
+            this.downloadFile('service-worker.js', swCode.trim());
+            showToast('Service Workerをダウンロードしました');
+        },
+
+        downloadFile: function(filename, content, isBase64 = false) {
+            const a = document.createElement('a');
+            if (isBase64) {
+                a.href = content;
+            } else {
+                const blob = new Blob([content], { type: 'text/plain' });
+                a.href = URL.createObjectURL(blob);
+            }
+            a.download = filename;
+            a.click();
+            if (!isBase64) URL.revokeObjectURL(a.href);
+        }
+    };
+
+    // --- Event Handler ---
+    function handleAppClick(e) {
+        const target = e.target;
+        const actionTarget = target.closest('[data-action]');
+        if (!actionTarget) return;
+
+        const action = actionTarget.dataset.action;
+        
+        if (allElements.sideMenu.style.transform === 'translateX(0px)' && !['toggle-menu', 'toggle-accordion'].includes(action)) {
+            if (['settings', 'show-about', 'backup', 'restore', 'manage-api-key', 'show-history', 'show-pwa-settings'].includes(action)) {
+                closeSideMenu();
+            }
+        }
+
+        switch (action) {
+            case 'prev-day': currentDate.setDate(currentDate.getDate() - 1); renderPage(); break;
+            case 'next-day': currentDate.setDate(currentDate.getDate() + 1); renderPage(); break;
+            case 'settings': showLabelManagementModal(); break;
+            case 'show-pwa-settings': showPWASettingsModal(); break;
+            case 'manage-api-key':
+                setTimeout(() => {
+                     openPromptModal('Google Maps APIキーを設定', googleApiKey, (newKey) => {
+                        if (newKey.length < 35) {
+                            showToast('無効なAPIキーの可能性があります。文字数を確認してください。', 'error');
+                            return;
+                        }
+                        saveApiKey(newKey);
+                        showToast('APIキーを保存しました');
+                    }, 'ここにAPIキーを貼り付け');
+                }, 350);
+                break;
+            case 'edit-daily-info': showDailyInfoModal(); break;
+            case 'add-site': showSiteModal(); break;
+            case 'edit-site': {
+                const index = actionTarget.dataset.index;
+                showSiteModal(getTodayData().sites[index], index);
+                break;
+            }
+            case 'backup':
+                if (Object.keys(allData).length === 0 && Object.values(labelTrees).every(arr => arr.length === 0)) {
+                    showToast('バックアップするデータがありません。', 'error');
+                    return;
+                }
+                const dataToBackup = {
+                    dataType: 'TrafficGuardAppBackup',
+                    version: '1.2.0',
+                    allData: allData,
+                    labelTrees: labelTrees
+                };
+                const dataStr = JSON.stringify(dataToBackup, null, 2);
+                const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(dataBlob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `現場記録バックアップ_${formatDate(new Date())}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+                showToast('バックアップファイルをダウンロードしました');
+                break;
+            case 'restore': allElements.restoreInput.click(); break;
+            case 'close-modal': closeModal(); break;
+            case 'save-daily-info':
+                const todayDataDI = getTodayData();
+                todayDataDI.dailyInfo.company = document.getElementById('company-final-value').value;
+                todayDataDI.dailyInfo.jobType = document.getElementById('jobType-final-value').value;
+                todayDataDI.dailyInfo.teamName = document.getElementById('teamName-final-value').value;
+                todayDataDI.dailyInfo.projectName = document.getElementById('project-name-input').value;
+                todayDataDI.dailyInfo.notes = document.getElementById('daily-notes-input').value;
+                saveData();
+                renderPage();
+                closeModal();
+                showToast('業務情報を保存しました');
+                break;
+            case 'save-site': {
+                const index = actionTarget.dataset.index;
+                const isNew = !index || index === 'null';
+                
+                const postalCode = document.getElementById('postal-code-input').value.trim();
+                const address = document.getElementById('address-input').value.trim();
+                const fullAddress = postalCode ? `〒${postalCode} ${address}` : address;
+
+                const newSiteData = {
+                    time: document.getElementById('time-input').value,
+                    workDetail: document.getElementById('workDetail-final-value').value,
+                    notes: document.getElementById('site-notes-input').value,
+                    address: fullAddress,
+                    mapLink: fullAddress ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullAddress)}` : ''
+                };
+
+                const todayDataS = getTodayData();
+                if (isNew) {
+                    todayDataS.sites.push(newSiteData);
+                } else {
+                    todayDataS.sites[index] = newSiteData;
+                }
+                todayDataS.sites.sort((a,b) => a.time.localeCompare(b.time));
+                saveData();
+                renderPage();
+                closeModal();
+                showToast(isNew ? '現場を追加しました' : '現場を更新しました');
+                break;
+            }
+            case 'delete-site': {
+                const index = actionTarget.dataset.index;
+                closeModal();
+                setTimeout(() => {
+                    openConfirmModal('この記録を本当に削除しますか？', () => {
+                        getTodayData().sites.splice(index, 1);
+                        saveData();
+                        renderPage();
+                        showToast('記録を削除しました');
+                    });
+                }, 300); 
+                break;
+            }
+            case 'add-root-label':
+            case 'add-child-label':
+            case 'edit-label':
+            case 'delete-label':
+                handleLabelManagementAction(actionTarget);
+                break;
+            case 'show-calendar': 
+                calendarDate = new Date(currentDate);
+                showCalendarModal(); 
+                break;
+            case 'prev-year': calendarDate.setFullYear(calendarDate.getFullYear() - 1); showCalendarModal(); break;
+            case 'prev-month': calendarDate.setMonth(calendarDate.getMonth() - 1); showCalendarModal(); break;
+            case 'next-month': calendarDate.setMonth(calendarDate.getMonth() + 1); showCalendarModal(); break;
+            case 'next-year': calendarDate.setFullYear(calendarDate.getFullYear() + 1); showCalendarModal(); break;
+            case 'go-to-today': currentDate = new Date(); renderPage(); closeModal(); break;
+            case 'select-date':
+                const [year, month, day] = actionTarget.dataset.date.split('-').map(Number);
+                currentDate = new Date(year, month - 1, day);
+                renderPage();
+                closeModal();
+                break;
+            case 'toggle-menu':
+                if (allElements.sideMenu.style.transform === 'translateX(0px)') {
+                    closeSideMenu();
+                } else {
+                    openSideMenu();
+                }
+                break;
+            case 'toggle-accordion':
+                const content = document.getElementById(actionTarget.dataset.target);
+                const icon = actionTarget.querySelector('i.fa-chevron-down');
+                if (content.style.maxHeight) {
+                    content.style.maxHeight = null;
+                    icon.style.transform = 'rotate(0deg)';
+                } else {
+                    content.style.maxHeight = content.scrollHeight + "px";
+                    icon.style.transform = 'rotate(180deg)';
+                }
+                break;
+            case 'show-about':
+                showAboutModal();
+                break;
+            case 'show-history':
+                showUpdateHistoryModal();
+                break;
+        }
+    }
+    
+    function handleLabelManagementAction(target) {
+        const action = target.dataset.action;
+        const id = parseInt(target.dataset.id);
+        const category = document.getElementById('category-select').value;
+        
+        const refreshModal = () => showLabelManagementModal(category);
+
+        const performActionAfterClose = (dialogAction) => {
+            closeModal();
+            setTimeout(dialogAction, 350);
+        };
+
+        if (action === 'add-root-label') {
+            performActionAfterClose(() => {
+                openPromptModal('新しい親ラベル名を入力してください:', '', (name) => {
+                    labelTrees[category].push({ id: nextLabelId++, name: name, parentId: null });
+                    saveLabelTrees();
+                    calculateNextLabelId();
+                    refreshModal();
+                });
+            });
+        } else if (action === 'add-child-label') {
+            performActionAfterClose(() => {
+                openPromptModal('追加する子ラベル名を入力してください:', '', (name) => {
+                    labelTrees[category].push({ id: nextLabelId++, name: name, parentId: id });
+                    saveLabelTrees();
+                    calculateNextLabelId();
+                    refreshModal();
+                });
+            });
+        } else if (action === 'edit-label') {
+            const node = labelTrees[category].find(n => n.id === id);
+            performActionAfterClose(() => {
+                openPromptModal('新しいラベル名を入力してください:', node.name, (newName) => {
+                    node.name = newName;
+                    saveLabelTrees();
+                    refreshModal();
+                });
+            });
+        } else if (action === 'delete-label') {
+             performActionAfterClose(() => {
+                openConfirmModal('このラベルとそのすべての子ラベルを削除しますか？', () => {
+                    function deleteNodeAndChildren(nodeId) {
+                        const children = labelTrees[category].filter(n => n.parentId === nodeId);
+                        children.forEach(child => deleteNodeAndChildren(child.id));
+                        labelTrees[category] = labelTrees[category].filter(n => n.id !== nodeId);
+                    }
+                    deleteNodeAndChildren(id);
+                    saveLabelTrees();
+                    refreshModal();
+                });
+            });
+        }
+    }
+    
+    // --- Google Maps API Loader ---
+    function loadGoogleMapsScript() {
+        if (window.google && window.google.maps) {
+            isMapApiLoaded = true;
+            return;
+        }
+        if (googleApiKey) {
+            const script = document.createElement('script');
+            script.src = `https://maps.googleapis.com/maps/api/js?key=${googleApiKey}`;
+            script.async = true;
+            script.defer = true;
+            script.onload = () => { isMapApiLoaded = true; };
+            script.onerror = () => { showToast('Google Mapsの読み込みに失敗しました。', 'error'); };
+            document.head.appendChild(script);
+        }
+    }
+
+    // --- Initialization ---
+    window.onload = () => {
+        loadApiKey();
+        loadData();
+        loadLabelTrees();
+        loadGoogleMapsScript();
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        applyTheme(savedTheme);
+        pwaManager.init(); // Initialize PWA features
+        renderPage();
+        document.body.addEventListener('click', handleAppClick);
+        allElements.sidemenuBackdrop.addEventListener('click', closeSideMenu);
+        allElements.darkModeToggle.addEventListener('change', toggleTheme);
+        allElements.restoreInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const restored = JSON.parse(event.target.result);
+                    // Compatible with older versions (check backup data structure)
+                    if (!restored.allData || !restored.labelTrees) {
+                        throw new Error('無効なバックアップファイルです。');
+                    }
+                    openConfirmModal('現在のすべての記録が上書きされます。よろしいですか？', () => {
+                        allData = restored.allData;
+                        labelTrees = restored.labelTrees;
+                        saveData();
+                        saveLabelTrees();
+                        calculateNextLabelId();
+                        renderPage();
+                        showToast('データを復元しました');
+                    });
+                } catch (err) {
+                    showToast(err.message || 'データの復元に失敗しました', 'error');
+                }
+                e.target.value = '';
+            };
+            reader.readAsText(file);
+        });
+    };
+    
+    // Globals for modals
+    window.closeModal = closeModal;
+    </script>
+</body>
+</html>
