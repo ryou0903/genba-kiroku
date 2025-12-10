@@ -10,7 +10,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="現場記録">
     
-    <title>現場記録アプリ v1.6.0</title>
+    <!-- Version 1.0.1 -->
+    <title>現場記録アプリ v1.0.1</title>
     
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon-192.png">
@@ -76,9 +77,12 @@
         .backdrop.active { opacity: 1; pointer-events: auto; }
         .modal-sheet { transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); transform: translateY(100%); }
         .modal-sheet.active { transform: translateY(0); }
+        
+        /* Z-Index Hierarchy Fixed: SideMenu(50) < FullScreen(60) < Modal(70) < Dialog(80) */
         .full-screen-sheet { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 60; background-color: #f8fafc; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); display: flex; flex-direction: column; }
         html.dark .full-screen-sheet { background-color: #0f172a; }
         .full-screen-sheet.active { transform: translateY(0); }
+        
         .side-menu-panel { transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); transform: translateX(-100%); }
         .side-menu-panel.active { transform: translateX(0); }
         .calendar-day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; position: relative; border-radius: 999px; font-weight: 500; }
@@ -91,24 +95,35 @@
         button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; outline: none; }
         button:active { transform: scale(0.97); }
         
-        /* Accordion Style for Notes */
+        /* Accordion Style */
         details > summary { list-style: none; cursor: pointer; }
         details > summary::-webkit-details-marker { display: none; }
         details[open] > summary .arrow-icon { transform: rotate(180deg); }
+        
+        /* Timeline for History */
+        .timeline-item { position: relative; padding-left: 24px; padding-bottom: 32px; border-left: 2px solid #e2e8f0; }
+        html.dark .timeline-item { border-left-color: #334155; }
+        .timeline-item:last-child { border-left-color: transparent; }
+        .timeline-dot { position: absolute; left: -7px; top: 0; width: 12px; height: 12px; border-radius: 50%; background-color: #3b82f6; border: 2px solid #fff; }
+        html.dark .timeline-dot { border-color: #0f172a; }
     </style>
 </head>
 <body>
 
     <div id="sidemenu-backdrop" class="backdrop fixed inset-0 z-40"></div>
-    <div id="modal-backdrop" class="backdrop fixed inset-0 z-50"></div>
-    <div id="dialog-modal-backdrop" class="backdrop fixed inset-0 z-[70] flex items-center justify-center p-4">
+    
+    <!-- FIX: Increased z-index to 65 to be above FullScreen(60) -->
+    <div id="modal-backdrop" class="backdrop fixed inset-0 z-[65]"></div>
+    
+    <!-- FIX: Increased z-index to 80 to be above Modal(70) -->
+    <div id="dialog-modal-backdrop" class="backdrop fixed inset-0 z-[80] flex items-center justify-center p-4">
         <div id="dialog-modal-content" class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-2xl w-full max-w-sm transform transition-all scale-100 border border-slate-100 dark:border-slate-700"></div>
     </div>
 
     <!-- Side Menu -->
     <div id="side-menu" class="side-menu-panel fixed top-0 left-0 h-full w-80 bg-white dark:bg-slate-900 shadow-2xl z-50 flex flex-col safe-area-top safe-area-bottom">
         <div class="p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gray-50/80 dark:bg-slate-800/80">
-            <div><h2 class="text-xl font-bold tracking-tight text-slate-800 dark:text-white">メニュー</h2><p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">現場記録アプリ v1.6.0</p></div>
+            <div><h2 class="text-xl font-bold tracking-tight text-slate-800 dark:text-white">メニュー</h2><p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">現場記録アプリ v1.0.1</p></div>
             <button data-action="close-menu" class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-300"><i class="fas fa-times"></i></button>
         </div>
         <div class="flex-grow overflow-y-auto p-4 space-y-2">
@@ -173,13 +188,19 @@
 
     <button data-action="add-site" class="fixed bottom-8 right-6 w-16 h-16 rounded-full shadow-glow bg-blue-600 text-white flex items-center justify-center text-2xl z-20 active:scale-95 transition-transform"><i class="fas fa-plus"></i></button>
 
-    <!-- Full Screen Site Record View -->
+    <!-- Full Screen Site Record View (z-index 60) -->
     <div id="site-record-view" class="full-screen-sheet safe-area-top safe-area-bottom">
         <!-- Replaced by JS -->
     </div>
 
+    <!-- General Full Screen View (History etc.) -->
+    <div id="general-full-screen-view" class="full-screen-sheet safe-area-top safe-area-bottom">
+        <!-- Replaced by JS -->
+    </div>
+
     <!-- Modal Sheets (Bottom Sheet) -->
-    <div id="modal-content" class="modal-sheet fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-slate-900 rounded-t-[2rem] shadow-[0_-10px_40px_-10px_rgba(0,0,0,0.2)] max-h-[94vh] flex flex-col safe-area-bottom">
+    <!-- FIX: Increased z-index to 70 to be above FullScreen(60) -->
+    <div id="modal-content" class="modal-sheet fixed bottom-0 left-0 right-0 z-[70] bg-white dark:bg-slate-900 rounded-t-[2rem] shadow-[0_-10px_40px_-10px_rgba(0,0,0,0.2)] max-h-[94vh] flex flex-col safe-area-bottom">
         <div id="modal-drag-handle" class="w-full py-4 flex justify-center cursor-grab touch-none flex-shrink-0 bg-white dark:bg-slate-900 rounded-t-[2rem]"><div class="w-12 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full"></div></div>
         <div id="modal-body" class="overflow-y-auto px-6 pb-8 flex-grow"></div>
     </div>
@@ -188,7 +209,7 @@
     <input type="file" id="restore-input" class="hidden" accept=".json">
 
     <script>
-    /** TrafficGuard PWA v1.6.0 */
+    /** TrafficGuard PWA v1.0.1 */
     
     // --- Config & State ---
     const STATE = {
@@ -201,7 +222,7 @@
         calendarView: 'day',
         modalDragging: false,
         modalStartY: 0,
-        tempWorkDetail: [] // For site editing
+        tempWorkDetail: []
     };
 
     const DOM = {
@@ -211,6 +232,7 @@
         displays: { date: document.getElementById('current-date-display'), daily: document.getElementById('daily-info-display'), sites: document.getElementById('sites-list') },
         modal: { container: document.getElementById('modal-content'), body: document.getElementById('modal-body'), handle: document.getElementById('modal-drag-handle') },
         fullScreen: document.getElementById('site-record-view'),
+        generalFullScreen: document.getElementById('general-full-screen-view'),
         dialog: { content: document.getElementById('dialog-modal-content') },
         toast: document.getElementById('toast'), inputRestore: document.getElementById('restore-input')
     };
@@ -282,6 +304,8 @@
         closeModal: () => { DOM.backdrops.modal.classList.remove('active'); DOM.modal.container.classList.remove('active'); DOM.modal.container.style.transform = ''; document.body.style.overflow = ''; },
         openFull: (html) => { DOM.fullScreen.innerHTML = html; requestAnimationFrame(() => DOM.fullScreen.classList.add('active')); document.body.style.overflow = 'hidden'; },
         closeFull: () => { DOM.fullScreen.classList.remove('active'); document.body.style.overflow = ''; },
+        openGeneralFull: (html) => { DOM.generalFullScreen.innerHTML = html; requestAnimationFrame(() => DOM.generalFullScreen.classList.add('active')); document.body.style.overflow = 'hidden'; },
+        closeGeneralFull: () => { DOM.generalFullScreen.classList.remove('active'); document.body.style.overflow = ''; },
         openPrompt: (title, val, onOk, placeholder = '') => {
             DOM.dialog.content.innerHTML = `<div class="text-center"><p class="text-sm font-bold text-slate-800 dark:text-white mb-4">${title}</p><input id="dlg-in" class="modern-input w-full p-3 mb-6 text-sm" value="${val}" placeholder="${placeholder}"><div class="flex gap-3"><button id="dlg-cancel" class="flex-1 py-2.5 bg-slate-100 dark:bg-slate-700 rounded-lg text-xs font-bold">キャンセル</button><button id="dlg-ok" class="flex-1 py-2.5 bg-blue-600 text-white rounded-lg text-xs font-bold shadow-lg">OK</button></div></div>`;
             DOM.backdrops.dialog.classList.add('active'); DOM.backdrops.dialog.classList.remove('hidden');
@@ -309,30 +333,21 @@
             const {postal, addr} = Utils.parseAddress(d.address);
             const safeIdx = idx !== null ? idx : 'null';
             
-            // Layout Construction
             const html = `
                 <div class="bg-white dark:bg-slate-900 h-full flex flex-col">
-                    <!-- Header -->
                     <div class="header-glass px-4 py-3 flex items-center justify-between z-10 flex-shrink-0">
                         <button onclick="UI.closeFull()" class="w-10 h-10 flex items-center justify-center rounded-full active:bg-slate-100 dark:active:bg-slate-800 text-slate-500 dark:text-slate-300"><i class="fas fa-chevron-left text-lg"></i></button>
                         <h2 class="text-lg font-bold text-slate-800 dark:text-white">現場記録</h2>
                         <div class="w-10"></div>
                     </div>
-                    
-                    <!-- Scrollable Content -->
                     <div class="flex-grow overflow-y-auto p-4 space-y-4">
-                        <!-- 1. Map -->
                         <div id="map-area" class="w-full h-48 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center border border-slate-200 dark:border-slate-700 relative overflow-hidden text-xs text-slate-400">
                             ${STATE.googleApiKey ? '<i class="fas fa-spinner fa-spin mr-2"></i>地図読み込み中...' : '<i class="fas fa-exclamation-triangle mr-1"></i>APIキー未設定'}
                         </div>
-
-                        <!-- 2. Address -->
                         <div>
                             <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 pl-1">住所</label>
                             <input id="addr-in" class="modern-input w-full p-3 text-sm" value="${addr}" placeholder="住所">
                         </div>
-
-                        <!-- 3. Postal & Place Name -->
                         <div class="grid grid-cols-12 gap-3">
                             <div class="col-span-4">
                                 <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 pl-1">郵便番号</label>
@@ -343,8 +358,6 @@
                                 <input id="place-name-in" class="modern-input w-full p-3 text-sm font-bold text-slate-700 dark:text-slate-200" value="${d.placeName || ''}" placeholder="施設・店名 (自動入力)">
                             </div>
                         </div>
-
-                        <!-- 4. Utility & Time -->
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 pl-1">便利機能</label>
@@ -355,8 +368,6 @@
                                 <input id="time-in" type="time" class="modern-input w-full p-2.5 text-center font-mono text-lg tracking-widest bg-slate-50 dark:bg-slate-800 h-[46px]" value="${d.time}">
                             </div>
                         </div>
-
-                        <!-- 5. Work Detail (Picker Style) -->
                         <div>
                             <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 pl-1">作業内容</label>
                             <button id="wd-btn" onclick="Handlers.openWorkDetailPicker()" class="modern-input w-full p-3 text-left flex justify-between items-center bg-white dark:bg-slate-800 active:bg-slate-50 dark:active:bg-slate-700">
@@ -365,8 +376,6 @@
                             </button>
                             <input type="hidden" id="wd-val" value="${d.workDetail||''}">
                         </div>
-
-                        <!-- 6. Notes (Accordion) -->
                         <details class="group modern-card border-none shadow-none bg-slate-50 dark:bg-slate-800/50">
                             <summary class="flex justify-between items-center font-bold p-3 text-sm text-slate-500 dark:text-slate-400 select-none">
                                 <span>備考</span>
@@ -376,12 +385,8 @@
                                 <textarea id="s-note-in" class="modern-input w-full p-3 h-24 text-sm resize-none bg-white dark:bg-slate-800" placeholder="メモを入力...">${d.notes||''}</textarea>
                             </div>
                         </details>
-                        
-                        <!-- Spacing for bottom button -->
                         <div class="h-20"></div>
                     </div>
-
-                    <!-- Footer Action -->
                     <div class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-white via-white to-transparent dark:from-slate-900 dark:via-slate-900 z-20 safe-area-bottom">
                         <div class="flex gap-3">
                             ${!isNew ? `<button onclick="Handlers.deleteSite(${safeIdx})" class="px-4 py-3.5 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-xl font-bold text-sm"><i class="fas fa-trash"></i></button>` : ''}
@@ -393,7 +398,6 @@
             
             UI.openFull(html);
             
-            // Map & Geo Logic
             const zIn=document.getElementById('zip-in'), aIn=document.getElementById('addr-in'), pIn=document.getElementById('place-name-in');
             aIn.addEventListener('blur',()=>{if(aIn.value&&STATE.googleApiKey)new google.maps.Geocoder().geocode({address:aIn.value},(r,s)=>{if(s==='OK'){const p=Utils.parseAddress(r[0].formatted_address.replace('日本、',''));zIn.value=p.postal;aIn.value=p.addr;}});});
             
@@ -415,31 +419,26 @@
 
         // --- Work Detail Picker Logic ---
         openWorkDetailPicker: () => {
-            // Re-use Label Modal Logic but for selection
             const cat = 'workDetail';
             const renderPicker = (pId, depth, path) => {
                 const kids = STATE.labelTrees[cat].filter(n => n.parentId === pId);
                 let h = `<div class="p-4"><h3 class="text-lg font-bold text-slate-800 dark:text-white mb-2">${depth===0 ? '作業内容を選択' : path[path.length-1]}</h3>`;
-                
                 if (depth > 0) h += `<button onclick="Handlers.pickWorkDetail('${path.join(' / ')}')" class="w-full text-left p-3 mb-2 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-bold border border-blue-200 dark:border-blue-800"><i class="fas fa-check mr-2"></i>「${path.join(' / ')}」で確定</button><div class="border-b border-slate-100 dark:border-slate-800 my-2"></div>`;
-                
                 if (kids.length === 0) {
                     h += `<p class="text-slate-400 text-sm text-center py-4">詳細なし</p>`;
                 } else {
                     kids.forEach(k => {
-                        // Pass next steps
                         h += `<button onclick='Handlers.nextPickerStep(${k.id}, ${depth+1}, ${JSON.stringify([...path, k.name])})' class="w-full text-left p-3 mb-2 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-medium flex justify-between items-center active:bg-slate-200 dark:active:bg-slate-700"><span>${k.name}</span><i class="fas fa-chevron-right text-slate-400 text-xs"></i></button>`;
                     });
                 }
-                // Custom input option
                 h += `<div class="border-t border-slate-100 dark:border-slate-800 mt-2 pt-2"><p class="text-xs text-slate-400 mb-1">または手入力</p><div class="flex gap-2"><input id="pk-custom" class="modern-input flex-1 p-2 text-sm" placeholder="自由入力"><button onclick="Handlers.pickWorkDetail(document.getElementById('pk-custom').value)" class="px-4 py-2 bg-slate-200 dark:bg-slate-700 rounded-lg text-xs font-bold">決定</button></div></div></div>`;
                 UI.openModal(h);
             };
-            window.Handlers.nextPickerStep = renderPicker; // Expose for recursion
+            window.Handlers.nextPickerStep = renderPicker;
             renderPicker(null, 0, []);
         },
         
-        nextPickerStep: (id, d, p) => {}, // Placeholder, defined inside
+        nextPickerStep: (id, d, p) => {},
         pickWorkDetail: (val) => {
             if(!val) return;
             const disp = document.getElementById('wd-display');
@@ -475,7 +474,7 @@
                 Utils.downloadFile('manifest.json', JSON.stringify(m, null, 2)); Utils.showToast('manifest.jsonを保存');
             },
             sw: () => {
-                const s = `const CACHE_NAME='tg-v1.6.0';const ASSETS=['./','./index.html','https://cdn.tailwindcss.com','https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'];self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(ASSETS))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request))));`;
+                const s = `const CACHE_NAME='tg-v1.0.1';const ASSETS=['./','./index.html','https://cdn.tailwindcss.com','https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'];self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(ASSETS))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request))));`;
                 Utils.downloadFile('service-worker.js', s.trim()); Utils.showToast('service-worker.jsを保存');
             },
             icon: () => {
@@ -483,6 +482,53 @@
                 const a = document.createElement('a'); a.href = c.toDataURL('image/png'); a.download = 'icon-192.png'; a.click();
             }
         },
+        
+        // Show History Full Screen
+        showHistory: () => {
+            const html = `
+                <div class="bg-white dark:bg-slate-900 h-full flex flex-col">
+                    <div class="header-glass px-4 py-3 flex items-center justify-between z-10 flex-shrink-0">
+                        <button onclick="UI.closeGeneralFull()" class="w-10 h-10 flex items-center justify-center rounded-full active:bg-slate-100 dark:active:bg-slate-800 text-slate-500 dark:text-slate-300"><i class="fas fa-chevron-left text-lg"></i></button>
+                        <h2 class="text-lg font-bold text-slate-800 dark:text-white">更新履歴</h2>
+                        <div class="w-10"></div>
+                    </div>
+                    <div class="flex-grow overflow-y-auto p-6">
+                        <!-- v1.0.1 -->
+                         <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="mb-1"><span class="text-lg font-bold text-slate-800 dark:text-white mr-2">v1.0.1</span><span class="text-xs text-slate-400">2025/12/10</span></div>
+                            <div class="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700">
+                                <p class="text-xs font-bold text-emerald-500 mb-2 uppercase tracking-wider">Bug Fix</p>
+                                <ul class="list-disc list-inside text-sm text-slate-600 dark:text-slate-400 space-y-1">
+                                    <li>現場記録画面で作業内容の選択画面が裏に隠れる不具合を修正</li>
+                                    <li>画面の重なり順（Z-index）を全体的に最適化</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                         <!-- v1.0.0 -->
+                         <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="mb-1"><span class="text-lg font-bold text-slate-800 dark:text-white mr-2">v1.0.0</span><span class="text-xs text-slate-400">2025/12/10</span></div>
+                            <div class="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700">
+                                <p class="text-xs font-bold text-blue-500 mb-2 uppercase tracking-wider">Major Update</p>
+                                <ul class="list-disc list-inside text-sm text-slate-600 dark:text-slate-400 space-y-1">
+                                    <li>アプリ正式リリース</li>
+                                    <li>更新履歴画面を全画面表示に刷新</li>
+                                    <li>バージョン表記のリセット</li>
+                                </ul>
+                            </div>
+                        </div>
+                         <div class="timeline-item border-l-0 pb-0">
+                            <div class="timeline-dot bg-slate-300 dark:bg-slate-700 border-none"></div>
+                            <p class="text-xs text-slate-400 pt-1">Release Start</p>
+                         </div>
+                    </div>
+                </div>
+            `;
+            UI.openGeneralFull(html);
+        },
+
         // Calendar & Other Handlers
         calMove: (dir) => {
             const anim = dir > 0 ? 'animate-slide-in-right' : 'animate-slide-in-left';
@@ -523,14 +569,14 @@
                 case 'edit-site': Handlers.openSiteRecord(Utils.getTodayData().sites[target.dataset.index], parseInt(target.dataset.index)); break;
                 
                 case 'toggle-accordion': const c = document.getElementById(target.dataset.target); c.classList.toggle('hidden'); target.querySelector('.fa-chevron-down').classList.toggle('rotate-180'); break;
-                case 'backup': const b = new Blob([JSON.stringify({dataType:'TrafficGuardAppBackup', version:'1.6.0', allData:STATE.allData, labelTrees:STATE.labelTrees},null,2)], {type:'application/json'}); Utils.downloadFile(`TG_Backup_${Utils.formatKey(new Date())}.json`, JSON.stringify({dataType:'TrafficGuardAppBackup', version:'1.6.0', allData:STATE.allData, labelTrees:STATE.labelTrees},null,2)); break;
+                case 'backup': const b = new Blob([JSON.stringify({dataType:'TrafficGuardAppBackup', version:'1.0.1', allData:STATE.allData, labelTrees:STATE.labelTrees},null,2)], {type:'application/json'}); Utils.downloadFile(`TG_Backup_${Utils.formatKey(new Date())}.json`, JSON.stringify({dataType:'TrafficGuardAppBackup', version:'1.0.1', allData:STATE.allData, labelTrees:STATE.labelTrees},null,2)); break;
                 case 'restore': DOM.inputRestore.click(); break;
                 case 'manage-api-key': UI.openPrompt('APIキー設定', STATE.googleApiKey, (k)=>{Storage.saveApiKey(k); Utils.showToast('保存しました');}, 'APIキーを入力'); break;
                 case 'dl-manifest': Handlers.pwaGen.manifest(); break;
                 case 'dl-sw': Handlers.pwaGen.sw(); break;
                 case 'dl-icon': Handlers.pwaGen.icon(); break;
-                case 'show-history': UI.openModal(`<h3 class="text-lg font-bold text-slate-800 dark:text-white mb-4">更新履歴</h3><div class="pl-4 border-l-2 border-blue-500 space-y-1"><h4 class="font-bold text-slate-800 dark:text-white">v1.6.0</h4><p class="text-xs text-slate-500">Full Screen Site Record</p><ul class="list-disc list-inside text-sm text-slate-600 dark:text-slate-400"><li>現場記録画面を全画面化</li><li>レイアウトの刷新（地図拡大・場所名追加）</li><li>作業内容選択UIの改善</li></ul></div><button onclick="UI.closeModal()" class="w-full mt-6 py-3 bg-slate-100 dark:bg-slate-800 rounded-xl font-bold text-slate-600 dark:text-slate-400">閉じる</button>`); break;
-                case 'show-about': UI.openModal(`<div class="text-center py-6"><i class="fas fa-shield-alt text-5xl text-blue-500 mb-4"></i><h3 class="text-xl font-bold text-slate-800 dark:text-white">現場記録アプリ</h3><p class="text-slate-500 text-sm mt-1">v1.6.0</p><button onclick="UI.closeModal()" class="w-full mt-8 py-3 bg-slate-100 dark:bg-slate-800 rounded-xl font-bold text-slate-600 dark:text-slate-400">閉じる</button></div>`); break;
+                case 'show-history': Handlers.showHistory(); break;
+                case 'show-about': UI.openModal(`<div class="text-center py-6"><i class="fas fa-shield-alt text-5xl text-blue-500 mb-4"></i><h3 class="text-xl font-bold text-slate-800 dark:text-white">現場記録アプリ</h3><p class="text-slate-500 text-sm mt-1">v1.0.1</p><button onclick="UI.closeModal()" class="w-full mt-8 py-3 bg-slate-100 dark:bg-slate-800 rounded-xl font-bold text-slate-600 dark:text-slate-400">閉じる</button></div>`); break;
                 case 'settings': showLabelManagementModal(); break;
             }
         });
