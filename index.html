@@ -816,7 +816,9 @@
                 };
                 window.currentMarker.addListener('dragend',e=>updateLoc(e.latLng.lat(),e.latLng.lng()));
             };
-            if(STATE.secrets.googleMapsKey && window.google) {
+            if(STATE.mapsAuthFailed) {
+                document.getElementById('map-area').innerHTML = '<div class="text-center p-2"><i class="fas fa-exclamation-triangle text-amber-500 text-lg mb-1"></i><p class="text-amber-500 font-bold text-xs">APIキーエラー</p><p class="text-slate-400 text-[10px] mt-1">Google Cloud ConsoleでMaps JavaScript APIと<br>Places API (New) が有効か確認してください</p></div>';
+            } else if(STATE.secrets.googleMapsKey && window.google) {
                 if (d && d.lat && d.lng) initMap(d.lat, d.lng);
                 else if (isNew) navigator.geolocation.getCurrentPosition(pos=>{ initMap(pos.coords.latitude, pos.coords.longitude); const geocoder = new google.maps.Geocoder(); geocoder.geocode({ location: { lat: pos.coords.latitude, lng: pos.coords.longitude } }, (results, status) => { if(status==='OK' && results[0]) { const p=Utils.parseAddress(results[0].formatted_address.replace('日本、','')); zIn.value=p.postal; aIn.value=p.addr; } }); },()=>document.getElementById('map-area').innerHTML='<span class="text-red-400">位置情報エラー</span>',{enableHighAccuracy:true});
                 else if (d.address) geocoder.geocode({address: d.address}, (results, status) => { if(status === 'OK' && results[0]) initMap(results[0].geometry.location.lat(), results[0].geometry.location.lng()); else document.getElementById('map-area').innerHTML='<span class="text-slate-400">地図情報なし</span>'; });
@@ -858,7 +860,8 @@
             window.UI.renderPage();
             
             if ('serviceWorker' in navigator) navigator.serviceWorker.register('./service-worker.js').catch(() => {});
-            if(window.STATE.secrets.googleMapsKey) { const s = document.createElement('script'); s.src = `https://maps.googleapis.com/maps/api/js?key=${window.STATE.secrets.googleMapsKey}&libraries=places`; document.head.appendChild(s); }
+            window.gm_authFailure = function() { STATE.mapsAuthFailed = true; Logger.add('ERROR','Maps','Google Maps API認証エラー (ApiTargetBlockedMapError)'); const mDiv = document.getElementById('map-area'); if(mDiv) mDiv.innerHTML = '<div class="text-center p-2"><i class="fas fa-exclamation-triangle text-amber-500 text-lg mb-1"></i><p class="text-amber-500 font-bold text-xs">APIキーエラー</p><p class="text-slate-400 text-[10px] mt-1">Google Cloud ConsoleでMaps JavaScript APIと<br>Places API (New) が有効か確認してください</p></div>'; };
+            if(window.STATE.secrets.googleMapsKey) { const s = document.createElement('script'); s.src = `https://maps.googleapis.com/maps/api/js?key=${window.STATE.secrets.googleMapsKey}&libraries=places&loading=async`; document.head.appendChild(s); }
             
             document.body.addEventListener('click', (e) => {
                 try {
